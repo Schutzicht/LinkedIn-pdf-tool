@@ -15,7 +15,20 @@ export class VisualRenderer {
     }
 
     async init() {
-        this.browser = await puppeteer.launch();
+        const launchOptions: any = {
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu'
+            ]
+        };
+
+        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+            launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        }
+
+        this.browser = await puppeteer.launch(launchOptions);
     }
 
     async close() {

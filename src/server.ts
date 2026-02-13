@@ -2,6 +2,8 @@ import express from 'express';
 import * as path from 'path';
 import { ContentProcessor } from './content-engine/processor';
 import { VisualRenderer } from './visual-engine/renderer';
+import archiver from 'archiver';
+import * as fs from 'fs';
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -17,28 +19,45 @@ const renderer = new VisualRenderer();
 // Initialize renderer (launch browser)
 renderer.init().then(() => console.log('Visual Renderer ready'));
 
+
 app.post('/api/generate', async (req, res) => {
     try {
         const { topic } = req.body;
         console.log(`Received request for: ${topic}`);
 
-        // 1. Generate Content (Mocked currently)
+        // 1. Generate Content
         const carouselData = await contentProcessor.generateCarousel(topic);
 
         // 2. Generate Visuals
         const outputDir = path.join(__dirname, '../output', `session-${Date.now()}`);
         await renderer.renderCarousel(carouselData, outputDir);
 
-        // 3. Return paths
-        // We need to return URLs relative to the public server
-        // Path relative from 'output' folder which is mounted at /output
+        // 3. Generate ZIP
+        const zipName = 'carousel.zip';
+        const zipPath = path.join(outputDir, zipName);
+        const output = fs.createWriteStream(zipPath);
+        const archive = archiver('zip', { zlib: { level: 9 } });
+
+        await new Promise<void>((resolve, reject) => {
+            output.on('close', resolve);
+            archive.on('error', reject);
+            archive.pipe(output);
+
+            // Add all PNG files from the directory
+            archive.glob('*.png', { cwd: outputDir });
+            archive.finalize();
+        });
+
+        // 4. Return paths
         const relativePath = path.relative(path.join(__dirname, '../output'), outputDir);
         const imageUrls = carouselData.slides.map((_, i) => `/output/${relativePath}/slide-${i + 1}.png`);
+        const zipUrl = `/output/${relativePath}/${zipName}`;
 
         res.json({
             success: true,
             data: carouselData,
-            images: imageUrls
+            images: imageUrls,
+            zipUrl: zipUrl
         });
 
     } catch (error) {

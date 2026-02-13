@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,7 +20,9 @@
     "express": "^4.21.2",
     "pdf-parse": "^1.1.1",
     "puppeteer": "^24.2.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

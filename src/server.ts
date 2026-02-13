@@ -3,7 +3,7 @@ import * as path from 'path';
 import { ContentProcessor } from './content-engine/processor';
 import { VisualRenderer } from './visual-engine/renderer';
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 // Serve static files from 'public' directory

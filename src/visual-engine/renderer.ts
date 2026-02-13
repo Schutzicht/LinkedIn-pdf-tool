@@ -87,67 +87,69 @@ export class VisualRenderer {
     private generateSlideHtml(slide: Slide): string {
         let html = '';
 
-        // Header
+        // Header / Subtitle (The "Eyebrow")
         if (slide.content.subtitle) {
             html += `<div class="header">${slide.content.subtitle}</div>`;
         }
 
-        // Main Content
+        // Main Content Container
         html += `<div class="content">`;
 
+        // Title (Intro/Outro usually)
         if (slide.content.title) {
             html += `<h1>${slide.content.title}</h1>`;
         }
 
-        if (slide.visuals?.icon === 'no-growth') {
-            html += `
-                <div class="growth-ban-icon">
-                    <span class="growth-text">GROEI</span>
-                </div>
-             `;
-        }
-
+        // Body Text (Content slides)
         if (slide.content.body) {
-            // Convert newlines to breaks
             const formattedBody = slide.content.body.replace(/\n/g, '<br>');
             html += `<p class="body-text">${formattedBody}</p>`;
         }
 
-        if (slide.content.footer) {
+        html += `</div>`; // End content container
+
+        // Source Citation (Bottom Left)
+        if (slide.content.footer && slide.type === 'content') {
             html += `<div class="source-citation">${slide.content.footer}</div>`;
         }
 
-        html += `</div>`; // End content
+        // --- DECORATIONS & INTERACTIONS ---
 
-        // Interaction / CTA (Right side usually)
-        if (slide.content.cta && slide.content.cta.includes('Klik')) {
+        // Intro Slide: "Klik hier" Arrow
+        if (slide.type === 'intro' || (slide.content.cta && slide.content.cta.includes('Swipe'))) {
             html += `
-                <div class="interaction-arrow">
-                    Klik<br>hier
-                    <!-- Simple SVG Arrow -->
-                    <svg class="arrow-svg" viewBox="0 0 50 80" fill="none" stroke="currentColor" stroke-width="3">
-                        <path d="M25 75 L25 5 M25 5 L5 25 M25 5 L45 25" stroke-linecap="round" stroke-linejoin="round"/>
+                <div class="interaction-container">
+                    <div class="click-here-text">Klik<br>hier</div>
+                    <svg class="hand-arrow" viewBox="0 0 50 80">
+                         <!-- Hand drawn arrow pointing up-leftish -->
+                        <path d="M25 75 C 25 75, 20 40, 10 10 M 10 10 L 30 25 M 10 10 L 5 30" />
                     </svg>
                 </div>
-             `;
+            `;
         }
 
-        if (slide.content.cta && slide.content.cta.includes('Like')) {
+        // Engagement/Outro Slide: "Like & Comment" Arrow
+        if (slide.type === 'engagement' || (slide.content.cta && (slide.content.cta.includes('Like') || slide.content.cta.includes('Connect')))) {
+            // Positioned bottom-center/right
             html += `
-                <div class="interaction-arrow" style="left: 100px; bottom: 80px; transform: rotate(10deg); right: auto;">
-                    Like &<br>comment
-                    <svg class="arrow-svg" viewBox="0 0 50 80" fill="none" stroke="currentColor" stroke-width="3" style="transform: rotate(180deg)">
-                         <path d="M25 75 L25 5 M25 5 L5 25 M25 5 L45 25" stroke-linecap="round" stroke-linejoin="round"/>
+                <div class="interaction-container" style="bottom: 120px; right: 300px; transform: rotate(5deg);">
+                    <div class="click-here-text">Like &<br>comment</div>
+                     <svg class="hand-arrow" viewBox="0 0 50 80" style="transform: scaleY(-1) rotate(20deg);">
+                        <path d="M25 75 C 25 75, 20 40, 10 10 M 10 10 L 30 25 M 10 10 L 5 30" />
                     </svg>
                 </div>
-             `;
+            `;
         }
 
-        // Footer Logo
+        // Footer Logo (Always present)
         html += `
             <div class="footer">
                 <div class="logo">
-                     <img src="https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg" alt="Business Verbeteraars" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'logo-text-container\\'><div class=\\'logo-text\\'>BUSINESS</div><div class=\\'logo-sub\\'>VERBETERAARS</div></div>'">
+                     <img src="https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg" alt="Business Verbeteraars">
+                </div>
+                <div class="footer-text">
+                    BUSINESS
+                    <span>VERBETERAARS</span>
                 </div>
             </div>
         `;

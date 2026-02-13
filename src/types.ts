@@ -20,6 +20,8 @@ export interface Slide {
 
 export interface CarouselData {
     title: string;
+    topic: string; // Added to track what triggered it
+    postBody: string; // The LinkedIn text content
     slides: Slide[];
     metadata: {
         author: string;

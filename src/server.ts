@@ -43,7 +43,10 @@ app.post('/api/generate', async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, error: 'Generation failed' });
+        res.status(500).json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown generation error'
+        });
     }
 });
 

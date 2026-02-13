@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide Template</title>
+    <style>
+        :root {
+            --primary-color: #10366b;
+            --secondary-color: #00aec7;
+            --accent-color: #f36b00;
+            --text-color: #1A1A1A;
+            --bg-color: #F5F5F5;
+            --paper-color: #FFFFFF;
+
+            --padding-std: 50px;
+            --font-main: "Verb", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            width: 1080px;
+            height: 1080px;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: var(--font-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .slide-container {
+            width: 1000px;
+            height: 1000px;
+            background: var(--paper-color);
+            position: relative;
+            padding: var(--padding-std);
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            border-bottom: 5px solid var(--secondary-color);
+            /* Cyan bottom border */
+        }
+
+        /* Layout Structure */
+        .header {
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--secondary-color);
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 72px;
+            line-height: 1.1;
+            color: var(--primary-color);
+            margin: 0 0 40px 0;
+            font-weight: 800;
+        }
+
+        .body-text {
+            font-size: 42px;
+            line-height: 1.4;
+            color: #333;
+            max-width: 90%;
+            white-space: pre-wrap;
+            /* For line breaks */
+        }
+
+        /* Branding Elements */
+        .growth-ban-icon {
+            position: absolute;
+            top: 100px;
+            right: 80px;
+            width: 150px;
+            height: 150px;
+            border: 8px solid var(--accent-color);
+            /* Orange */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-15deg);
+        }
+
+        .growth-ban-icon::after {
+            content: '';
+            position: absolute;
+            width: 140%;
+            height: 8px;
+            background: var(--accent-color);
+            transform: rotate(-45deg);
+        }
+
+        .growth-text {
+            color: var(--accent-color);
+            font-weight: 900;
+            font-size: 32px;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            height: 80px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .footer .logo img {
+            height: 50px;
+            display: block;
+        }
+
+        /* Fallback text logo if image fails */
+        .footer .logo-text-container {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+
+        .footer .logo-text {
+            color: var(--primary-color);
+            font-weight: 900;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+
+        .footer .logo-sub {
+            color: var(--secondary-color);
+            /* Cyan */
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 3px;
+        }
+
+        .interaction-arrow {
+            position: absolute;
+            right: 80px;
+            bottom: 120px;
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-align: center;
+            line-height: 1.2;
+            transform: rotate(-5deg);
+        }
+
+        .arrow-svg {
+            width: 50px;
+            height: 80px;
+            display: block;
+            margin: 10px auto 0;
+            color: var(--accent-color);
+            /* Orange arrow */
+        }
+
+        /* Intro Slide Styling */
+        .slide-type-intro {
+            background-color: var(--primary-color);
+            border-bottom: 5px solid var(--accent-color);
+        }
+
+        .slide-type-intro h1 {
+            color: #FFFFFF;
+        }
+
+        .slide-type-intro .header {
+            color: var(--accent-color);
+            /* Orange eyebrow */
+        }
+
+        .slide-type-intro .interaction-arrow {
+            color: #FFFFFF;
+        }
+
+        .slide-type-intro .footer .logo-text {
+            color: #FFFFFF;
+        }
+
+        .slide-type-intro .logo img {
+            filter: brightness(0) invert(1);
+        }
+
+        /* Outro Slide Styling */
+        .slide-type-outro {
+            background-color: var(--secondary-color);
+            /* Cyan */
+            border-bottom: 5px solid var(--primary-color);
+        }
+
+        .slide-type-outro h1,
+        .slide-type-outro .header {
+            color: var(--primary-color);
+        }
+
+        /* Content Slide Styling */
+        .slide-type-content {
+            background-color: var(--paper-color);
+        }
+
+        .source-citation {
+            font-size: 20px;
+            color: #888;
+            margin-top: 40px;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="slide-container" id="slide-container">
+        <!-- Content injected by Puppeteer -->
+    </div>
+</body>
+
+</html>

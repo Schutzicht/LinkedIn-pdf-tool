@@ -253,14 +253,15 @@
                     updatePreviewUI(result);
 
                 } else {
-                    alert('Er ging iets mis: ' + result.error);
-                    loading.classList.add('hidden');
+                    console.warn('API Error, switching to mock data:', result.error);
+                    alert('Google API is overbelast (503). Ik laad nu test-data zodat je de tool toch kunt zien!');
+                    loadMockData();
                 }
 
             } catch (error) {
                 console.error(error);
-                alert('Fout bij verbinden met server.');
-                loading.classList.add('hidden');
+                alert('Fout bij verbinden (of Google 503). Ik laad test-data!');
+                loadMockData();
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -344,6 +345,31 @@
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
+        }
+
+        async function loadMockData() {
+            const mockSlides = [
+                { type: 'intro', content: { title: 'DIT IS EEN TEST', subtitle: 'GOOGLE IS DRUK', body: 'De AI API geeft een 503 error. Daarom zie je nu deze test-data.', cta: 'Swipe' } },
+                { type: 'content', content: { title: 'DE EDITOR', subtitle: 'HIER BENEDEN', body: 'Kijk hieronder 👇\nDit is het blok waar je om vroeg. Pas deze tekst maar eens aan!', footer: 'Fallback Modus' } },
+                { type: 'outro', content: { title: 'WERKT HET?', subtitle: 'CHECK', body: 'Klik op Visuals Updaten om te zien dat het werkt.', cta: 'Like & Comment' } }
+            ];
+
+            currentCarouselData = {
+                slides: mockSlides,
+                postBody: "De AI is even offline, dus hier is een placeholder tekst."
+            };
+
+            // Show Editor
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('previewSection').classList.remove('hidden');
+            document.getElementById('editorSection').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+
+            document.getElementById('postBodyOutput').value = currentCarouselData.postBody;
+            renderEditor(mockSlides);
+
+            // Auto trigger render
+            updateVisuals();
         }
 
         function updatePreviewUI(result) {

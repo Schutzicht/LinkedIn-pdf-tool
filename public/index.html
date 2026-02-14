@@ -97,17 +97,24 @@
                     class="w-full h-40 p-4 rounded-xl border-2 border-slate-200 bg-slate-50 focus:border-secondary focus:ring-0 transition-all text-lg resize-none placeholder-slate-400"
                     placeholder="Bijvoorbeeld: Waarom ondernemers bang zijn om te groeien..."></textarea>
 
-                <div class="mt-6 flex items-center justify-between">
+                <div class="mt-6 flex items-center justify-between gap-4">
                     <span class="text-xs text-slate-400 font-medium">✨ Powered by Zee-zicht.nl</span>
-                    <button id="generateBtn" onclick="generateCarousel()"
-                        class="bg-accent hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-orange-500/30 transform hover:-translate-y-1 transition-all duration-200 flex items-center gap-3">
-                        <span>Genereren</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-                                clip-rule="evenodd" />
-                        </svg>
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="loadMockData()"
+                            class="bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold py-4 px-6 rounded-xl transition-all duration-200 text-sm">
+                            Test Layout
+                        </button>
+                        <button id="generateBtn" onclick="generateCarousel()"
+                            class="bg-accent hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-orange-500/30 transform hover:-translate-y-1 transition-all duration-200 flex items-center gap-3">
+                            <span>Genereren</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -377,6 +384,32 @@
                 card.appendChild(overlay);
                 grid.appendChild(card);
             });
+        }
+
+        async function loadMockData() {
+            const mockSlides = [
+                { type: 'intro', content: { title: 'DIT IS EEN TEST', subtitle: 'VISUAL CHECK', body: 'Even checken of de layout 1080x1350 lekker werkt.', cta: 'Swipe' } },
+                { type: 'content', content: { title: 'DE REGELS', subtitle: 'STRICT DESIGN', body: 'We kijken naar:\n1. Marges (9%)\n2. Grid uitlijning\n3. *Dikgedrukte woorden*\n4. En natuurlijk het font.', footer: 'Bron: Design Guidelines' } },
+                { type: 'content', content: { title: 'NOG EEN SLIDE', subtitle: 'CONSISTENTIE', body: 'Lange tekst om te kijken of de line-breaks goed gaan op dit smallere formaat. Het zou netjes moeten wrappen zonder de rand te raken.', footer: 'Bron: Design Guidelines' } },
+                { type: 'outro', content: { title: 'CONCLUSIE?', subtitle: 'EINDE', body: 'Ziet dit er strak uit?', cta: 'Like & Comment' } }
+            ];
+
+            currentCarouselData = {
+                slides: mockSlides,
+                postBody: "Dit is een test post voor de layout check."
+            };
+
+            // Show Editor Only
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('previewSection').classList.remove('hidden');
+            document.getElementById('editorSection').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+
+            document.getElementById('postBodyOutput').value = currentCarouselData.postBody;
+            renderEditor(mockSlides);
+
+            // Auto trigger render
+            updateVisuals();
         }
 
         function copyPostText() {

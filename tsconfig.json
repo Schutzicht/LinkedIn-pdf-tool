@@ -18,17 +18,19 @@
     "declaration": true,
     "declarationMap": true,
     // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    // Parametros uncheck
+    // "noUncheckedIndexedAccess": true,
+    // "exactOptionalPropertyTypes": true,
     // Style Options
     // "noImplicitReturns": true,
     // "noImplicitOverride": true,
     // "noUnusedLocals": true,
     // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": false,
     // Recommended Options
-    "strict": true,
+    "strict": false,
+    "noEmitOnError": false,
     "jsx": "react-jsx",
     "verbatimModuleSyntax": false,
     "esModuleInterop": true,

@@ -14,9 +14,15 @@ if (fs.existsSync(distPath)) {
 // 2. Run TypeScript Compiler
 console.log("🔨 Compiling TypeScript...");
 try {
-    // Run tsc. If it fails, execSync throws an error.
-    // We inherit stdio so the user (and Render logs) see the output.
-    execSync('npx tsc', { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+    const tscPath = path.join(__dirname, '../node_modules/.bin/tsc');
+    console.log(`Using TSC at: ${tscPath}`);
+
+    if (fs.existsSync(tscPath)) {
+        execSync(`"${tscPath}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+    } else {
+        console.log("⚠️ Local TSC not found, falling back to npx tsc...");
+        execSync('npx tsc', { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+    }
     console.log("✅ TypeScript compilation successful.");
 } catch (error) {
     console.error("❌ TypeScript compilation FAILED.");

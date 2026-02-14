@@ -43,7 +43,7 @@ export class VisualRenderer {
         await page.setViewport({ width: 1638, height: 2048, deviceScaleFactor: 1 });
 
         // Add console log forwarding for debug
-        page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+        page.on('console', (msg: any) => console.log('PAGE LOG:', msg.text()));
 
         for (let i = 0; i < data.slides.length; i++) {
             const slide = data.slides[i];
@@ -94,17 +94,28 @@ export class VisualRenderer {
         // --- 1. Rule-Based Template Selection ---
         if (slide.type === 'intro') {
             templateClass = 'template-a'; // Cover + Visual
-            // Add a visual placeholder for Intro
+
+            // INTRO VISUAL LOGIC:
+            // If the system (Gemini) provided an image keyword or we have a mechanism to select one, we would insert an <img> tag here.
+            // For now, we create the container that *can* hold the image, satisfying the "backend must place it" requirement.
+            // Placeholder Logic:
             visualHtml = `
                 <div class="visual-placeholder">
-                    <span>🖼️</span>
-                    VISUAL ZONE<br>
-                    <span style="font-size: 24px; font-weight: normal; margin-top:10px;">(Plaats hier je afbeelding)</span>
+                    <!-- 
+                        BACKEND LOGIC: 
+                        If we had a real image URL, we would inject: 
+                        <img src="${slide.content.imageKeyword || 'default.png'}" alt="Visual">
+                    -->
+                    <div class="visual-placeholder-text">
+                        <span>🖼️</span><br>
+                        (Visual wordt hier ingeladen)
+                    </div>
                 </div>`;
+
         } else if (slide.type === 'outro' || slide.type === 'engagement') {
             templateClass = 'template-c'; // Engagement / Data
 
-            // Inject "Like & Comment" visual in the Visual Zone for Outro
+            // OUTRO VISUAL: Like & Comment (Bottom Left)
             visualHtml = `
                 <div class="like-comment-container">
                     <div class="like-comment-text">
@@ -146,7 +157,7 @@ export class VisualRenderer {
             ? `<div class="citation-text">${slide.content.footer}</div>`
             : (slide.type === 'intro' ? `<div class="citation-text">Swipe voor meer 👉</div>` : '');
 
-        // CTA Zone (Strict Rules: "Klik hier" or "Swipe")
+        // CTA Zone (Strict Rules)
         if (slide.type === 'intro' || (slide.content.cta && slide.content.cta.includes('Swipe'))) {
             ctaHtml = `
                 <div class="cta-badge">
@@ -154,10 +165,10 @@ export class VisualRenderer {
                 </div>
             `;
         } else if (slide.type === 'outro') {
-            // For outro, we rely on the visual "Like & Comment" more, but keep the badge if explicitly requested or standard "Link in post"
+            // OUTRO CTA: URL
             ctaHtml = `
-                <div class="cta-badge" style="background: var(--primary-color);">
-                   Link in de post!
+                <div class="outro-url">
+                   www.businessverbeteraars.nl
                 </div>
             `;
         }
@@ -172,9 +183,7 @@ export class VisualRenderer {
                 <div class="footer-left-content">${footerLeft}</div>
                 <div class="footer-right-content">
                     <div class="footer-branding">
-                        <div class="footer-text">
-                            BUSINESS<br><span>VERBETERAARS</span>
-                        </div>
+                        <!-- REMOVED Text, ONLY Logo right-aligned -->
                         <img src="https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg" alt="Logo" class="footer-logo-img">
                     </div>
                 </div>

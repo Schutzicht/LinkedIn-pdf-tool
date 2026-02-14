@@ -95,7 +95,8 @@
 
         /* Visual Zone - Hidden by default, shown in Template A/C */
         .visual-zone {
-            grid-column: 3 / span 8;
+            grid-column: 2 / span 10;
+            /* Wider for potential full width usage */
             grid-row: 3;
             display: none;
             /* Active templates will override this */
@@ -106,30 +107,41 @@
             margin-bottom: 20px;
         }
 
-        /* Visual Placeholder Styling */
+        /* Visual Placeholder Styling (Now supports Image Injection) */
         .visual-placeholder {
             width: 100%;
             height: 100%;
-            min-height: 400px;
-            /* Taller */
-            background: rgba(0, 174, 199, 0.05);
-            border: 4px dashed var(--secondary-color);
+            min-height: 500px;
+            /* Solid Height for Intro */
+            background: #e0f7fa;
+            /* Light cyan bg */
+            border: none;
             border-radius: 30px;
+            overflow: hidden;
+            /* Crop images */
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        /* If an image is injected, it fills the placeholder */
+        .visual-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Fallback text if no image */
+        .visual-placeholder-text {
             color: var(--secondary-color);
             font-weight: bold;
             font-size: 32px;
             text-align: center;
+            padding: 20px;
         }
 
-        .visual-placeholder span {
-            font-size: 80px;
-            margin-bottom: 20px;
-            display: block;
-        }
 
         /* CTA Zone - Absolute to float over/near logic without breaking flow, but strictly positioned */
         .cta-zone {
@@ -166,10 +178,11 @@
             justify-content: flex-end;
         }
 
-        .footer-branding {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        /* Footer Logo Only */
+        .footer-logo-img {
+            height: 80px;
+            /* Slightly larger as requested */
+            display: block;
         }
 
         /* --- TEMPLATES --- */
@@ -186,6 +199,8 @@
             /* Activate Visual */
             min-height: 500px;
             /* Larger visual for intro */
+            grid-column: 3 / span 8;
+            /* Centered narrower */
         }
 
         .template-a .header-text {
@@ -207,9 +222,16 @@
 
         .template-c .visual-zone {
             display: flex;
+            /* Position Bottom Left */
+            justify-content: flex-start;
+            /* Left align */
+            align-items: flex-end;
+            /* Bottom align */
             margin-top: auto;
+            margin-left: 40px;
+            /* Offset from edge */
+            margin-bottom: 40px;
             min-height: auto;
-            /* Let content dictate */
         }
 
         /* --- TYPOGRAPHY --- */
@@ -239,7 +261,7 @@
         }
 
         .body-text {
-            font-family: var(--font-hand);
+            font-family: var(--font-main);
             font-size: 60px;
             line-height: 1.4;
             color: var(--primary-color);
@@ -255,10 +277,6 @@
         }
 
         /* --- FOOTER ELEMENTS --- */
-        .footer-logo-img {
-            height: 70px;
-            display: block;
-        }
 
         .citation-text {
             font-family: var(--font-hand);
@@ -268,24 +286,7 @@
             max-width: 600px;
         }
 
-        .footer-text {
-            font-family: var(--font-main);
-            font-weight: 700;
-            font-size: 24px;
-            color: var(--secondary-color);
-            line-height: 1;
-            text-transform: uppercase;
-            text-align: right;
-        }
-
-        .footer-text span {
-            display: block;
-            color: var(--primary-color);
-            font-size: 28px;
-            font-weight: 800;
-        }
-
-        /* CTA Badge */
+        /* CTA Badge / URL */
         .cta-badge {
             background: var(--accent-color);
             color: white;
@@ -300,29 +301,41 @@
             gap: 10px;
         }
 
+        /* Outro URL Style */
+        .outro-url {
+            font-family: var(--font-main);
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--secondary-color);
+            text-decoration: none;
+            border-bottom: 4px solid var(--accent-color);
+            padding-bottom: 5px;
+        }
+
         /* --- LIKE & COMMENT (OUTRO) --- */
         .like-comment-container {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
+            /* Left align */
             gap: 30px;
-            margin-top: 40px;
-            transform: rotate(-2deg);
+            transform: rotate(-5deg);
+            /* More playful angle */
         }
 
         .like-comment-text {
             font-family: var(--font-hand);
-            font-size: 80px;
+            font-size: 70px;
+            /* Slightly smaller to fit better */
             font-weight: 700;
             color: #333;
-            /* Dark grey like example */
             line-height: 0.9;
             text-align: right;
         }
 
         .like-comment-arrow {
-            width: 80px;
-            height: 120px;
+            width: 70px;
+            height: 100px;
         }
 
         .like-comment-arrow path {

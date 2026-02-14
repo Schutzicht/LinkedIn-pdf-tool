@@ -42,6 +42,9 @@ export class VisualRenderer {
         // Set viewport to 1638x2048 (High Res 4:5)
         await page.setViewport({ width: 1638, height: 2048, deviceScaleFactor: 1 });
 
+        // Add console log forwarding for debug
+        page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+
         for (let i = 0; i < data.slides.length; i++) {
             const slide = data.slides[i];
             if (!slide) continue;
@@ -92,9 +95,28 @@ export class VisualRenderer {
         if (slide.type === 'intro') {
             templateClass = 'template-a'; // Cover + Visual
             // Add a visual placeholder for Intro
-            visualHtml = `<div class="visual-placeholder">VISUAL<br>ZONE</div>`;
+            visualHtml = `
+                <div class="visual-placeholder">
+                    <span>🖼️</span>
+                    VISUAL ZONE<br>
+                    <span style="font-size: 24px; font-weight: normal; margin-top:10px;">(Plaats hier je afbeelding)</span>
+                </div>`;
         } else if (slide.type === 'outro' || slide.type === 'engagement') {
             templateClass = 'template-c'; // Engagement / Data
+
+            // Inject "Like & Comment" visual in the Visual Zone for Outro
+            visualHtml = `
+                <div class="like-comment-container">
+                    <div class="like-comment-text">
+                        Like &<br>comment
+                    </div>
+                    <svg class="like-comment-arrow" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Hand drawn arrow pointing down -->
+                         <path d="M 25 10 Q 20 40 25 70 M 25 70 L 10 50 M 25 70 L 40 50" />
+                    </svg>
+                </div>
+            `;
+
         } else {
             // Content slides
             templateClass = 'template-b';
@@ -121,8 +143,8 @@ export class VisualRenderer {
 
         // Footer Zone (Left side optional text)
         const footerLeft = slide.content.footer
-            ? slide.content.footer
-            : (slide.type === 'intro' ? 'Swipe voor meer 👉' : '');
+            ? `<div class="citation-text">${slide.content.footer}</div>`
+            : (slide.type === 'intro' ? `<div class="citation-text">Swipe voor meer 👉</div>` : '');
 
         // CTA Zone (Strict Rules: "Klik hier" or "Swipe")
         if (slide.type === 'intro' || (slide.content.cta && slide.content.cta.includes('Swipe'))) {
@@ -132,6 +154,7 @@ export class VisualRenderer {
                 </div>
             `;
         } else if (slide.type === 'outro') {
+            // For outro, we rely on the visual "Like & Comment" more, but keep the badge if explicitly requested or standard "Link in post"
             ctaHtml = `
                 <div class="cta-badge" style="background: var(--primary-color);">
                    Link in de post!
@@ -146,13 +169,13 @@ export class VisualRenderer {
             <div class="visual-zone">${visualHtml}</div>
             <div class="cta-zone">${ctaHtml}</div>
             <div class="footer-zone">
-                <div class="footer-left">${footerLeft}</div>
-                <div class="footer-right">
-                    <div class="footer-text" style="display:inline-block; text-align:right; margin-right: 20px;">
-                        BUSINESS<br><span>VERBETERAARS</span>
-                    </div>
-                    <div class="footer-logo" style="display:inline-block;">
-                         <img src="https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg" alt="Logo">
+                <div class="footer-left-content">${footerLeft}</div>
+                <div class="footer-right-content">
+                    <div class="footer-branding">
+                        <div class="footer-text">
+                            BUSINESS<br><span>VERBETERAARS</span>
+                        </div>
+                        <img src="https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg" alt="Logo" class="footer-logo-img">
                     </div>
                 </div>
             </div>

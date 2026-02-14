@@ -3,8 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Slide, CarouselData } from '../types';
 
-
-
 export class VisualRenderer {
     private browser: any;
     private templateHtml: string;
@@ -41,9 +39,8 @@ export class VisualRenderer {
         }
 
         const page = await this.browser.newPage();
-        // 1080x1350 is the optimal LinkedIn portrait ratio (4:5), or 1080x1080 square.
-        // PDF suggests square.
-        await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 2 });
+        // Set viewport to 1080x1350 (4:5 Ratio)
+        await page.setViewport({ width: 1080, height: 1350, deviceScaleFactor: 2 });
 
         for (let i = 0; i < data.slides.length; i++) {
             const slide = data.slides[i];
@@ -101,38 +98,40 @@ export class VisualRenderer {
         }
 
         // Body Text (Content slides)
+        // Auto-bold logic: bold words between asterisks *word* -> <strong>word</strong>
         if (slide.content.body) {
-            const formattedBody = slide.content.body.replace(/\n/g, '<br>');
+            let formattedBody = slide.content.body.replace(/\n/g, '<br>');
+            // Simple robust regex for bolding: *text*
+            formattedBody = formattedBody.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
+
             html += `<p class="body-text">${formattedBody}</p>`;
         }
 
         html += `</div>`; // End content container
 
-        // Source Citation (Bottom Left)
+        // Source Citation (Bottom)
         if (slide.content.footer && slide.type === 'content') {
             html += `<div class="source-citation">${slide.content.footer}</div>`;
         }
 
         // --- DECORATIONS & INTERACTIONS ---
 
-        // Intro Slide: "Klik hier" Arrow
+        // Intro Slide: "Klik hier" Arrow (Top Right usually)
         if (slide.type === 'intro' || (slide.content.cta && slide.content.cta.includes('Swipe'))) {
             html += `
-                <div class="interaction-container">
+                <div class="interaction-container top-right">
                     <div class="click-here-text">Klik<br>hier</div>
                     <svg class="hand-arrow" viewBox="0 0 50 80">
-                         <!-- Hand drawn arrow pointing up-leftish -->
                         <path d="M25 75 C 25 75, 20 40, 10 10 M 10 10 L 30 25 M 10 10 L 5 30" />
                     </svg>
                 </div>
             `;
         }
 
-        // Engagement/Outro Slide: "Like & Comment" Arrow
+        // Engagement/Outro Slide: "Like & Comment" Arrow (Bottom Left)
         if (slide.type === 'engagement' || (slide.content.cta && (slide.content.cta.includes('Like') || slide.content.cta.includes('Connect')))) {
-            // Positioned bottom-center/right
             html += `
-                <div class="interaction-container" style="bottom: 120px; right: 300px; transform: rotate(5deg);">
+                <div class="interaction-container bottom-left">
                     <div class="click-here-text">Like &<br>comment</div>
                      <svg class="hand-arrow" viewBox="0 0 50 80" style="transform: scaleY(-1) rotate(20deg);">
                         <path d="M25 75 C 25 75, 20 40, 10 10 M 10 10 L 30 25 M 10 10 L 5 30" />
@@ -141,7 +140,7 @@ export class VisualRenderer {
             `;
         }
 
-        // Footer Logo (Always present)
+        // Footer Logo (Fixed Bottom Right)
         html += `
             <div class="footer">
                 <div class="logo">

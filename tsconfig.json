@@ -35,15 +35,13 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
-    "noEmitOnError": false
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "src/test-gen.ts"
+    "dist"
   ]
 }

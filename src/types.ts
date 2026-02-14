@@ -11,6 +11,7 @@ export interface Slide {
         subtitle?: string;
         footer?: string; // e.g. "Bron: ..."
         cta?: string; // "Klik hier" or "Like & comment"
+        imageKeyword?: string;
     };
     visuals?: {
         icon?: string; // Icon name e.g. "growth-ban"

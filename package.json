@@ -4,10 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && cp -r src/visual-engine/templates dist/visual-engine/",
+    "build": "tsc && mkdir -p dist/visual-engine && cp -r src/visual-engine/templates dist/visual-engine/",
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [],
   "author": "",

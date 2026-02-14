@@ -39,33 +39,35 @@ export class VisualRenderer {
         }
 
         const page = await this.browser.newPage();
-        // Set viewport to 1080x1350 (4:5 Ratio)
-        await page.setViewport({ width: 1080, height: 1350, deviceScaleFactor: 2 });
+        // Set viewport to 1638x2048 (High Res 4:5)
+        await page.setViewport({ width: 1638, height: 2048, deviceScaleFactor: 1 });
 
         for (let i = 0; i < data.slides.length; i++) {
             const slide = data.slides[i];
             if (!slide) continue;
-            const contentHtml = this.generateSlideHtml(slide);
 
-            // Set content with proper waiting for network idle if we had external assets
+            const { html, templateClass } = this.generateSlideHtml(slide);
+
+            // Set content
             await page.setContent(this.templateHtml, { waitUntil: 'domcontentloaded' });
 
-            await page.evaluate((html: string, slideType: string) => {
+            // Inject Content & Classes
+            await page.evaluate((html: string, templateClass: string) => {
                 const container = document.getElementById('slide-container');
                 if (container) {
-                    container.innerHTML = html;
-                    container.className = 'slide-container slide-type-' + slideType; // Add type class
+                    container.innerHTML = html; // Inject the ZONES content
+                    container.className = `slide-container ${templateClass}`;
                 }
-            }, contentHtml, slide.type);
+            }, html, templateClass);
 
-            // Wait for images to load
+            // Wait for images
             await page.evaluate(async () => {
                 const selectors = Array.from(document.querySelectorAll("img"));
                 await Promise.all(selectors.map(img => {
                     if (img.complete) return;
-                    return new Promise((resolve, reject) => {
+                    return new Promise((resolve) => {
                         img.addEventListener('load', resolve);
-                        img.addEventListener('error', resolve); // Resolve on error too to avoid hang
+                        img.addEventListener('error', resolve);
                     });
                 }));
             });
@@ -75,84 +77,87 @@ export class VisualRenderer {
                 path: path.join(outputDir, filename),
                 omitBackground: false
             });
-            console.log(`Rendered ${filename}`);
+            console.log(`Rendered ${filename} (${templateClass})`);
         }
 
         await page.close();
     }
 
-    private generateSlideHtml(slide: Slide): string {
-        let html = '';
+    private generateSlideHtml(slide: Slide): { html: string, templateClass: string } {
+        let templateClass = 'template-b'; // Default: Content slide
+        let visualHtml = '';
+        let ctaHtml = '';
 
-        // Header / Subtitle (The "Eyebrow")
-        if (slide.content.subtitle) {
-            html += `<div class="header">${slide.content.subtitle}</div>`;
+        // --- 1. Rule-Based Template Selection ---
+        if (slide.type === 'intro') {
+            templateClass = 'template-a'; // Cover + Visual
+            // Add a visual placeholder for Intro
+            visualHtml = `<div class="visual-placeholder">VISUAL<br>ZONE</div>`;
+        } else if (slide.type === 'outro' || slide.type === 'engagement') {
+            templateClass = 'template-c'; // Engagement / Data
+        } else {
+            // Content slides
+            templateClass = 'template-b';
         }
 
-        // Main Content Container
-        html += `<div class="content">`;
+        // --- 2. Zone Content Generation ---
 
-        // Title (Intro/Outro usually)
+        // Header Zone
+        const headerContent = slide.content.subtitle
+            ? `<div class="header-text">${slide.content.subtitle}</div>`
+            : '';
+
+        // Main Text Zone
+        let mainContent = '';
         if (slide.content.title) {
-            html += `<h1>${slide.content.title}</h1>`;
+            mainContent += `<h1>${slide.content.title}</h1>`;
         }
-
-        // Body Text (Content slides)
-        // Auto-bold logic: bold words between asterisks *word* -> <strong>word</strong>
         if (slide.content.body) {
             let formattedBody = slide.content.body.replace(/\n/g, '<br>');
-            // Simple robust regex for bolding: *text*
+            // Simple bolding: *text* -> <strong>text</strong>
             formattedBody = formattedBody.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
-
-            html += `<p class="body-text">${formattedBody}</p>`;
+            mainContent += `<div class="body-text">${formattedBody}</div>`;
         }
 
-        html += `</div>`; // End content container
+        // Footer Zone (Left side optional text)
+        const footerLeft = slide.content.footer
+            ? slide.content.footer
+            : (slide.type === 'intro' ? 'Swipe voor meer 👉' : '');
 
-        // Source Citation (Bottom)
-        if (slide.content.footer && slide.type === 'content') {
-            html += `<div class="source-citation">${slide.content.footer}</div>`;
-        }
-
-        // --- DECORATIONS & INTERACTIONS ---
-
-        // Intro Slide: "Klik hier" Arrow (Top Right usually)
+        // CTA Zone (Strict Rules: "Klik hier" or "Swipe")
         if (slide.type === 'intro' || (slide.content.cta && slide.content.cta.includes('Swipe'))) {
-            html += `
-                <div class="interaction-container top-right">
-                    <div class="click-here-text">Klik<br>hier</div>
-                    <svg class="hand-arrow" viewBox="0 0 50 80">
-                        <path d="M25 75 C 25 75, 20 40, 10 10 M 10 10 L 30 25 M 10 10 L 5 30" />
-                    </svg>
+            ctaHtml = `
+                <div class="cta-badge">
+                   Swipe 👉
+                </div>
+            `;
+        } else if (slide.type === 'outro') {
+            ctaHtml = `
+                <div class="cta-badge" style="background: var(--primary-color);">
+                   Link in de post!
                 </div>
             `;
         }
 
-        // Engagement/Outro Slide: "Like & Comment" Arrow (Bottom Left)
-        if (slide.type === 'engagement' || (slide.content.cta && (slide.content.cta.includes('Like') || slide.content.cta.includes('Connect')))) {
-            html += `
-                <div class="interaction-container bottom-left">
-                    <div class="click-here-text">Like &<br>comment</div>
-                     <svg class="hand-arrow" viewBox="0 0 50 80" style="transform: scaleY(-1) rotate(20deg);">
-                        <path d="M25 75 C 25 75, 20 40, 10 10 M 10 10 L 30 25 M 10 10 L 5 30" />
-                    </svg>
-                </div>
-            `;
-        }
-
-        // Footer Logo (Fixed Bottom Right)
-        html += `
-            <div class="footer">
-                <div class="logo">
-                     <img src="https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg" alt="Business Verbeteraars">
-                </div>
-                <div class="footer-text">
-                    BUSINESS
-                    <span>VERBETERAARS</span>
+        // Combine into the HTML structure expected by the grid layout
+        const zonesHtml = `
+            <div class="header-zone">${headerContent}</div>
+            <div class="main-text-zone">${mainContent}</div>
+            <div class="visual-zone">${visualHtml}</div>
+            <div class="cta-zone">${ctaHtml}</div>
+            <div class="footer-zone">
+                <div class="footer-left">${footerLeft}</div>
+                <div class="footer-right">
+                    <div class="footer-text" style="display:inline-block; text-align:right; margin-right: 20px;">
+                        BUSINESS<br><span>VERBETERAARS</span>
+                    </div>
+                    <div class="footer-logo" style="display:inline-block;">
+                         <img src="https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg" alt="Logo">
+                    </div>
                 </div>
             </div>
         `;
 
-        return html;
+        return { html: zonesHtml, templateClass };
     }
 }

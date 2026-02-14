@@ -349,9 +349,10 @@
 
         async function loadMockData() {
             const mockSlides = [
-                { type: 'intro', content: { title: 'DIT IS EEN TEST', subtitle: 'GOOGLE IS DRUK', body: 'De AI API geeft een 503 error. Daarom zie je nu deze test-data.', cta: 'Swipe' } },
-                { type: 'content', content: { title: 'DE EDITOR', subtitle: 'HIER BENEDEN', body: 'Kijk hieronder 👇\nDit is het blok waar je om vroeg. Pas deze tekst maar eens aan!', footer: 'Fallback Modus' } },
-                { type: 'outro', content: { title: 'WERKT HET?', subtitle: 'CHECK', body: 'Klik op Visuals Updaten om te zien dat het werkt.', cta: 'Like & Comment' } }
+                { type: 'intro', content: { title: 'TEMPLATE A: INTRO', subtitle: 'COVER STYLE', body: 'Hier zie je de grote titel en ruimte voor een visual (placeholder).', cta: 'Swipe' } },
+                { type: 'content', content: { title: 'TEMPLATE B: CONTENT', subtitle: 'FOCUS OP TEKST', body: 'Dit is Template B. Geen afleiding, alleen tekst. De grid zorgt dat alles netjes in het midden staat.', footer: 'Bron: Strict Rules' } },
+                { type: 'content', content: { title: 'NOG EEN TEMPLATE B', subtitle: 'MEER TEKST', body: 'Let op de 1638x2048 resolutie. Dat is een flink stuk hoger dan eerst (4:5 ratio).', footer: 'Bron: Design Guidelines' } },
+                { type: 'outro', content: { title: 'TEMPLATE C: OUTRO', subtitle: 'CONCLUSIE', body: 'Hier staat de CTA centraal. Linksonder in de footer zie je het logo.', cta: 'Link in Bio' } }
             ];
 
             currentCarouselData = {

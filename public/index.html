@@ -300,7 +300,7 @@
 
                 } else {
                     console.warn('API Error, switching to mock data:', result.error);
-                    alert('Google API is overbelast (503). Ik laad nu test-data zodat je de tool toch kunt zien!');
+                    alert(`Foutmelding van server: ${result.error}\n\n(Waarschijnlijk ontbreekt de API Key op Render of is Google echt druk). Ik laad nu test-data.`);
                     loadMockData();
                 }
 

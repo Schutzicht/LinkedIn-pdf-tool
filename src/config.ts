@@ -19,7 +19,7 @@ export const BRAND = {
     },
     layout: {
         width: 1080,
-        height: 1080, // Square format (was 2048)
+        height: 1080, // Square format
         padding: 50
     },
     text: {
@@ -32,8 +32,8 @@ export const BRAND = {
 
 export const CONFIG = {
     ai: {
-        apiKey: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.replace(/["']/g, '').trim() : undefined,
-        model: 'gemini-1.5-flash-001',
+        apiKey: process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY,
+        model: process.env.AI_MODEL || 'gemini-flash-latest',
         temperature: 0.7
     }
 };

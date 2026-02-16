@@ -12,7 +12,6 @@ export interface Slide {
         footer?: string; // e.g. "Bron: ..."
         cta?: string; // "Klik hier" or "Like & comment"
         imageKeyword?: string;
-        imageUrl?: string; // New: For manual overrides
     };
     visuals?: {
         icon?: string; // Icon name e.g. "growth-ban"

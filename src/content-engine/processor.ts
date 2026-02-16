@@ -17,17 +17,10 @@ export class ContentProcessor {
     async generateCarousel(topic: string): Promise<CarouselData> {
         console.log("Processing input with AI:", topic);
         console.log("Using model:", CONFIG.ai.model);
+        console.log("API Key present:", !!CONFIG.ai.apiKey);
 
         if (!CONFIG.ai.apiKey) {
-            console.error("❌ CRITICAL: GEMINI_API_KEY is missing in environment variables!");
-            throw new Error("API Key configuration error. Please ensure GEMINI_API_KEY is allowed in Render Environment.");
-        }
-
-        // Debug Log (Masked)
-        const keyMasked = CONFIG.ai.apiKey ? `${CONFIG.ai.apiKey.substring(0, 4)}...${CONFIG.ai.apiKey.slice(-4)}` : 'MISSING';
-        console.log(`🔑 Using API Key: ${keyMasked}`);
-        if (!CONFIG.ai.apiKey.startsWith('AIza')) {
-            console.warn("⚠️ WARNING: API Key does not start with 'AIza'. It might be invalid.");
+            throw new Error("Missing API Key");
         }
 
         const prompt = `
@@ -55,8 +48,7 @@ export class ContentProcessor {
                         "content": {
                             "subtitle": "~~~ DE VRAAG VAN VANDAAG ~~~",
                             "title": "A provocative hook/question about the topic (Short & Punchy). E.g. 'Zijn ondernemers groeiweigeraars?'",
-                            "cta": "Swipe voor het antwoord",
-                            "imageKeyword": "A single English keyword describing the visual subject (e.g. 'mountain', 'office', 'storm', 'puzzle')."
+                            "cta": "Swipe voor het antwoord"
                         },
                         "visuals": { "style": "cover" }
                     },
@@ -111,31 +103,20 @@ export class ContentProcessor {
         `;
 
         try {
+            console.log("Sending prompt to AI...");
             const result = await this.model.generateContent(prompt);
+            console.log("AI response received. Processing...");
             const response = await result.response;
             const text = response.text();
 
-            // Extract JSON from response (handles markdown code blocks and preamble text)
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error("No valid JSON found in AI response");
-            }
-            return JSON.parse(jsonMatch[0]);
-        } catch (error: any) {
+            // Clean up code blocks if present
+            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            const data: CarouselData = JSON.parse(jsonStr);
+            return data;
+        } catch (error) {
             console.error("AI Generation failed:", error);
-
-            // Diagnostic: List available models if prompt fails
-            try {
-                console.log("Attempting to list available models for this key...");
-                // Actually list models via REST API to verify Key permissions
-                const models = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.ai.apiKey}`);
-                const modelsData = await models.json();
-                console.log("📄 Available Models for this Key:", JSON.stringify(modelsData, null, 2));
-            } catch (listError) {
-                console.error("Could not list models:", listError);
-            }
-
-            throw new Error(`AI fout: ${error.message}. (Check Render Logs for available models)`);
+            throw error;
         }
     }
 }

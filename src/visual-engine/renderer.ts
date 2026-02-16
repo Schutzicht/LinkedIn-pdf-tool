@@ -39,8 +39,8 @@ export class VisualRenderer {
         }
 
         const page = await this.browser.newPage();
-        // Set viewport to 1080x1080 (Square)
-        await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 1 });
+        // Set viewport to 1638x2048 (High Res 4:5)
+        await page.setViewport({ width: 1638, height: 2048, deviceScaleFactor: 1 });
 
         // Add console log forwarding for debug
         page.on('console', (msg: any) => console.log('PAGE LOG:', msg.text()));
@@ -100,27 +100,13 @@ export class VisualRenderer {
             templateClass = 'template-a';
 
             // Intro Visual
-            if (slide.content.imageUrl) {
-                // User provided an image URL
-                visualHtml = `
-                    <div class="visual-container" style="width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0;">
-                         <img src="${slide.content.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Visual">
+            visualHtml = `
+                <div class="visual-placeholder">
+                    <div class="visual-placeholder-text">
+                        <span>🖼️</span><br>
+                        (Visual wordt hier ingeladen)
                     </div>
-                `;
-            } else {
-                // AUTO-GENERATED VISUAL (User requested this)
-                // Use the keyword from AI, or fallback to the title
-                const keyword = slide.content.imageKeyword || slide.content.title || 'abstract business';
-                const encodedKeyword = encodeURIComponent(keyword + ' minimal business photography high quality');
-                const autoImageUrl = `https://image.pollinations.ai/prompt/${encodedKeyword}?width=1080&height=1080&nologo=true&seed=${Math.random()}`;
-
-                visualHtml = `
-                    <div class="visual-container" style="width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0;">
-                         <!-- Auto-generated Image -->
-                         <img src="${autoImageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Auto Visual: ${keyword}">
-                    </div>
-                `;
-            }
+                </div>`;
 
             // Intro Content
             if (slide.content.subtitle) headerContent = `<div class="header-text">${slide.content.subtitle}</div>`;
@@ -149,7 +135,7 @@ export class VisualRenderer {
                         Like &<br>comment
                     </div>
                     <svg class="like-comment-arrow" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M 25 10 L 25 90 M 10 70 L 25 90 L 40 70" />
+                         <path d="M 25 10 L 25 90 M 10 70 L 25 90 L 40 70" />
                     </svg>
                 </div>
             `;

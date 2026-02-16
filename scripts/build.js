@@ -14,19 +14,14 @@ if (fs.existsSync(distPath)) {
 // 2. Run TypeScript Compiler
 console.log("🔨 Compiling TypeScript...");
 try {
-    const tscPath = path.join(__dirname, '../node_modules/.bin/tsc');
-    console.log(`Using TSC at: ${tscPath}`);
+    console.log("Using tsc from PATH...");
+    // Just run tsc. npm run build adds node_modules/.bin to PATH.
+    execSync('tsc', { stdio: 'inherit', cwd: path.join(__dirname, '..') });
 
-    if (fs.existsSync(tscPath)) {
-        execSync(`"${tscPath}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..') });
-    } else {
-        console.log("⚠️ Local TSC not found, falling back to npx tsc...");
-        execSync('npx tsc', { stdio: 'inherit', cwd: path.join(__dirname, '..') });
-    }
     console.log("✅ TypeScript compilation successful.");
 } catch (error) {
     console.error("❌ TypeScript compilation FAILED.");
-    console.error("This is likely a type error in the code.");
+    console.error("Error details:", error.message);
     process.exit(1);
 }
 

@@ -19,7 +19,7 @@ export const BRAND = {
     },
     layout: {
         width: 1080,
-        height: 1080, // Square format
+        height: 1080, // Square format (was 2048)
         padding: 50
     },
     text: {

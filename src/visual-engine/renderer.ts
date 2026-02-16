@@ -39,8 +39,14 @@ export class VisualRenderer {
         }
 
         const page = await this.browser.newPage();
-        // Set viewport to 1638x2048 (High Res 4:5)
-        await page.setViewport({ width: 1638, height: 2048, deviceScaleFactor: 1 });
+        // Set viewport to 1080x1080 (Square)
+        await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 1 });
+
+        // ... existing code ...
+
+        const keyword = slide.content.imageKeyword || slide.content.title || 'abstract business';
+        const encodedKeyword = encodeURIComponent(keyword + ' minimal business photography high quality');
+        const autoImageUrl = `https://image.pollinations.ai/prompt/${encodedKeyword}?width=1080&height=1080&nologo=true&seed=${Math.random()}`;
 
         // Add console log forwarding for debug
         page.on('console', (msg: any) => console.log('PAGE LOG:', msg.text()));

@@ -18,9 +18,9 @@
             --font-main: "Montserrat", sans-serif;
             --font-hand: "Kalam", cursive;
 
-            /* Strict Canvas 1638x2048 */
-            --canvas-width: 1638px;
-            --canvas-height: 2048px;
+            /* Strict Canvas 1080x1080 */
+            --canvas-width: 1080px;
+            --canvas-height: 1080px;
         }
 
         body {
@@ -39,22 +39,23 @@
 
         /* HARD ZONE: The Paper */
         .slide-container {
-            width: 1400px;
-            /* ~85% of width */
-            height: 1800px;
-            /* ~88% of height */
+            width: 900px;
+            /* ~83% of width */
+            height: 900px;
+            /* Square Paper */
             background: var(--paper-color);
             position: relative;
             /* Fixed Border Radius */
-            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            border-radius: 25px 5px 20px 5px/15px 20px 5px 25px;
+            /* Subtle irregularities */
             box-shadow: 4px 8px 25px rgba(0, 0, 0, 0.15);
             transform: rotate(-1deg);
             /* Subtle tilt */
 
             /* ZONES GRID SYSTEM */
             display: grid;
-            padding: 100px 80px;
-            /* Fixed padding */
+            padding: 60px 60px;
+            /* Adjusted padding */
             box-sizing: border-box;
 
             /* Grid Definition: 12 Cols */
@@ -67,10 +68,10 @@
                 /* MainTextZone */
                 min-content
                 /* VisualZone */
-                140px
+                80px
                 /* FooterZone */
             ;
-            gap: 20px;
+            gap: 15px;
         }
 
         /* --- ZONES --- */
@@ -111,12 +112,12 @@
         .visual-placeholder {
             width: 100%;
             height: 100%;
-            min-height: 500px;
-            /* Solid Height for Intro */
+            min-height: 350px;
+            /* Reduced for square */
             background: #e0f7fa;
             /* Light cyan bg */
             border: none;
-            border-radius: 30px;
+            border-radius: 20px;
             overflow: hidden;
             /* Crop images */
             display: flex;
@@ -129,7 +130,8 @@
         /* Specific Outro Styles */
         .outro-title {
             font-family: var(--font-main);
-            font-size: 100px;
+            font-size: 60px;
+            /* Reduced */
             /* Same large size for both */
             font-weight: 800;
             font-style: italic;
@@ -143,14 +145,14 @@
         }
 
         .outro-spacer {
-            height: 60px;
+            height: 30px;
             /* The 'wit regel' */
             width: 100%;
         }
 
         .outro-url {
             font-family: var(--font-main);
-            font-size: 35px;
+            font-size: 24px;
             /* Much smaller */
             font-weight: 900;
             /* Bold */
@@ -168,9 +170,9 @@
             position: absolute;
             z-index: 30;
             /* Highest priority */
-            bottom: 240px;
+            bottom: 120px;
             /* Just above footer */
-            right: 60px;
+            right: 40px;
             pointer-events: none;
             /* Just visual */
         }
@@ -182,7 +184,7 @@
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
             z-index: 20;
             /* Debug: border-top: 1px solid red; */
         }
@@ -200,10 +202,50 @@
 
         /* Footer Logo Only */
         .footer-logo-img {
-            height: 80px;
+            height: 50px;
             /* Slightly larger as requested */
             display: block;
         }
+
+        /* Font Size Adjustments for Square */
+        h1 {
+            font-size: 50px;
+            /* Reduced from 90 */
+        }
+
+        .body-text {
+            font-size: 32px;
+            /* Reduced from 60 */
+        }
+
+        .header-text {
+            font-size: 28px;
+            /* Reduced */
+        }
+
+        .cta-badge {
+            font-size: 24px;
+            padding: 10px 25px;
+        }
+
+        .citation-text {
+            font-size: 18px;
+        }
+
+        .like-comment-text {
+            font-size: 40px;
+        }
+
+        .like-comment-container {
+            bottom: 100px;
+            left: 100px;
+        }
+
+        .like-comment-arrow {
+            width: 50px;
+            height: 80px;
+        }
+
 
         /* --- TEMPLATES --- */
 

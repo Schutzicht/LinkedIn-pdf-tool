@@ -16,8 +16,7 @@ export class ContentProcessor {
 
     async generateCarousel(topic: string): Promise<CarouselData> {
         console.log("Processing input with AI:", topic);
-        console.log("Primary model:", CONFIG.ai.model);
-        console.log("API Key present:", !!CONFIG.ai.apiKey);
+        console.log("Using model:", CONFIG.ai.model);
 
         if (!CONFIG.ai.apiKey) {
             throw new Error("Missing API Key");
@@ -104,32 +103,16 @@ export class ContentProcessor {
         `;
 
         try {
-            console.log(`Attempting generation with primary model: ${CONFIG.ai.model}`);
             const result = await this.model.generateContent(prompt);
-            return await this.processResponse(result);
+            const response = await result.response;
+            const text = response.text();
+
+            // Clean up code blocks if present
+            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(jsonStr);
         } catch (error: any) {
-            console.warn(`Primary model failed (${error.message}). Switching to fallback: gemini-pro`);
-
-            try {
-                // FALLBACK MECHANISM
-                const fallbackModel = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
-                const result = await fallbackModel.generateContent(prompt);
-                return await this.processResponse(result);
-            } catch (fallbackError: any) {
-                console.error("All models failed:", fallbackError);
-                throw new Error(`AI Generation Failed: ${fallbackError.message}`);
-            }
+            console.error("AI Generation failed:", error);
+            throw new Error(`AI fout: ${error.message}`);
         }
-    }
-
-    private async processResponse(result: any): Promise<CarouselData> {
-        console.log("AI response received. Processing...");
-        const response = await result.response;
-        const text = response.text();
-
-        // Clean up code blocks if present
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        return JSON.parse(jsonStr);
     }
 }

@@ -48,7 +48,8 @@ export class ContentProcessor {
                         "content": {
                             "subtitle": "~~~ DE VRAAG VAN VANDAAG ~~~",
                             "title": "A provocative hook/question about the topic (Short & Punchy). E.g. 'Zijn ondernemers groeiweigeraars?'",
-                            "cta": "Swipe voor het antwoord"
+                            "cta": "Swipe voor het antwoord",
+                            "imageKeyword": "A single English keyword describing the visual subject (e.g. 'mountain', 'office', 'storm', 'puzzle')."
                         },
                         "visuals": { "style": "cover" }
                     },

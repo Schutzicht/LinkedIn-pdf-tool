@@ -108,14 +108,18 @@ export class VisualRenderer {
                     </div>
                 `;
             } else {
-                // Placeholder
+                // AUTO-GENERATED VISUAL (User requested this)
+                // Use the keyword from AI, or fallback to the title
+                const keyword = slide.content.imageKeyword || slide.content.title || 'abstract business';
+                const encodedKeyword = encodeURIComponent(keyword + ' minimal business photography high quality');
+                const autoImageUrl = `https://image.pollinations.ai/prompt/${encodedKeyword}?width=1080&height=1350&nologo=true&seed=${Math.random()}`;
+
                 visualHtml = `
-                    <div class="visual-placeholder">
-                        <div class="visual-placeholder-text">
-                            <span>🖼️</span><br>
-                            (Plak een URL in de editor)
-                        </div>
-                    </div>`;
+                    <div class="visual-container" style="width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0;">
+                         <!-- Auto-generated Image -->
+                         <img src="${autoImageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Auto Visual: ${keyword}">
+                    </div>
+                `;
             }
 
             // Intro Content

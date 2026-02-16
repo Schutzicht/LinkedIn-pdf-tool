@@ -111,15 +111,7 @@
                 </div>
             </div>
 
-            <!-- Loading State -->
-            <div id="loading" class="hidden">
-                <div
-                    class="flex flex-col items-center justify-center p-12 bg-surface rounded-2xl border border-slate-100 shadow-sm text-center">
-                    <div class="loader mb-4"></div>
-                    <h3 class="text-xl font-bold text-primary">Content smeden...</h3>
-                    <p class="text-slate-500">Even geduld, Jeroen is aan het typen.</p>
-                </div>
-            </div>
+
 
             <!-- Editor Section -->
             <div id="editorSection" class="hidden space-y-6 bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
@@ -155,6 +147,16 @@
             <div id="previewSection" class="hidden h-full flex flex-col">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-primary">Resultaat</h2>
+                </div>
+
+                <!-- Loading State (Moved to Right Column) -->
+                <div id="loading" class="hidden mb-8">
+                    <div
+                        class="flex flex-col items-center justify-center p-12 bg-surface rounded-2xl border border-slate-100 shadow-sm text-center">
+                        <div class="loader mb-4"></div>
+                        <h3 class="text-xl font-bold text-primary">Content smeden...</h3>
+                        <p class="text-slate-500">Even geduld, Jeroen is aan het typen.</p>
+                    </div>
                 </div>
 
                 <!-- Generated LinkedIn Post Text -->

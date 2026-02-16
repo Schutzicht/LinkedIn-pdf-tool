@@ -94,6 +94,66 @@ app.post('/api/render', async (req, res) => {
     }
 });
 
+// --- DEBUG ENDPOINT ---
+import { CONFIG } from './config';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+app.get('/api/test-ai', async (req, res) => {
+    try {
+        const key = CONFIG.ai.apiKey;
+        const modelName = CONFIG.ai.model;
+
+        const debugInfo = {
+            envApiKeyPresent: !!process.env.GEMINI_API_KEY,
+            configApiKeyPresent: !!key,
+            apiKeyMasked: key ? `${key.substring(0, 4)}...` : 'MISSING',
+            modelConfigured: modelName,
+            testTime: new Date().toISOString()
+        };
+
+        if (!key) throw new Error("API Key is missing in Config");
+
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({ model: modelName });
+
+        console.log("TEST: Sending prompt...");
+        const result = await model.generateContent("Test connection. Reply with 'OK'.");
+        const response = await result.response;
+        const text = response.text();
+
+        res.json({
+            success: true,
+            message: "AI Connection Successful",
+            response: text,
+            debug: debugInfo
+        });
+
+    } catch (error: any) {
+        console.error("TEST FAILED:", error);
+
+        // Try to list models to see if key works at all
+        let availableModels = "Could not list";
+        try {
+            // @ts-ignore
+            if (CONFIG.ai.apiKey) {
+                const m = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.ai.apiKey}`);
+                const d = await m.json();
+                availableModels = d;
+            }
+        } catch (e) { }
+
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            availableModelsRaw: availableModels,
+            debug: {
+                modelConfigured: CONFIG.ai.model,
+                envApiKeyStarts: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 4) : 'NONE'
+            }
+        });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
     console.log(`API Key configured: ${!!process.env.GEMINI_API_KEY}`);

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && mkdir -p dist/visual-engine/templates && cp src/visual-engine/templates/template.html dist/visual-engine/templates/",
+    "build": "node scripts/build.js",
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"

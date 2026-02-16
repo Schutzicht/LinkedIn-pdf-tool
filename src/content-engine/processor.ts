@@ -107,9 +107,12 @@ export class ContentProcessor {
             const response = await result.response;
             const text = response.text();
 
-            // Clean up code blocks if present
-            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            return JSON.parse(jsonStr);
+            // Extract JSON from response (handles markdown code blocks and preamble text)
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error("No valid JSON found in AI response");
+            }
+            return JSON.parse(jsonMatch[0]);
         } catch (error: any) {
             console.error("AI Generation failed:", error);
             throw new Error(`AI fout: ${error.message}`);

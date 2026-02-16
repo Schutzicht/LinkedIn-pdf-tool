@@ -42,12 +42,6 @@ export class VisualRenderer {
         // Set viewport to 1080x1080 (Square)
         await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 1 });
 
-        // ... existing code ...
-
-        const keyword = slide.content.imageKeyword || slide.content.title || 'abstract business';
-        const encodedKeyword = encodeURIComponent(keyword + ' minimal business photography high quality');
-        const autoImageUrl = `https://image.pollinations.ai/prompt/${encodedKeyword}?width=1080&height=1080&nologo=true&seed=${Math.random()}`;
-
         // Add console log forwarding for debug
         page.on('console', (msg: any) => console.log('PAGE LOG:', msg.text()));
 
@@ -118,7 +112,7 @@ export class VisualRenderer {
                 // Use the keyword from AI, or fallback to the title
                 const keyword = slide.content.imageKeyword || slide.content.title || 'abstract business';
                 const encodedKeyword = encodeURIComponent(keyword + ' minimal business photography high quality');
-                const autoImageUrl = `https://image.pollinations.ai/prompt/${encodedKeyword}?width=1080&height=1350&nologo=true&seed=${Math.random()}`;
+                const autoImageUrl = `https://image.pollinations.ai/prompt/${encodedKeyword}?width=1080&height=1080&nologo=true&seed=${Math.random()}`;
 
                 visualHtml = `
                     <div class="visual-container" style="width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0;">
@@ -155,7 +149,7 @@ export class VisualRenderer {
                         Like &<br>comment
                     </div>
                     <svg class="like-comment-arrow" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
-                         <path d="M 25 10 L 25 90 M 10 70 L 25 90 L 40 70" />
+                        <path d="M 25 10 L 25 90 M 10 70 L 25 90 L 40 70" />
                     </svg>
                 </div>
             `;

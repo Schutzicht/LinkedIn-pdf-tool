@@ -126,20 +126,40 @@
             box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
         }
 
-        /* If an image is injected, it fills the placeholder */
-        .visual-placeholder img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        /* Specific Outro Styles */
+        .outro-title {
+            font-family: var(--font-main);
+            font-size: 100px;
+            /* Same large size for both */
+            font-weight: 800;
+            font-style: italic;
+            color: #00aec7;
+            /* Cyan */
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.1;
+            letter-spacing: 2px;
+            text-align: center;
         }
 
-        /* Fallback text if no image */
-        .visual-placeholder-text {
-            color: var(--secondary-color);
-            font-weight: bold;
-            font-size: 32px;
-            text-align: center;
-            padding: 20px;
+        .outro-spacer {
+            height: 60px;
+            /* The 'wit regel' */
+            width: 100%;
+        }
+
+        .outro-url {
+            font-family: var(--font-main);
+            font-size: 35px;
+            /* Much smaller */
+            font-weight: 900;
+            /* Bold */
+            color: #00aec7;
+            /* Cyan */
+            text-decoration: none;
+            margin-top: 20px;
+            display: block;
+            font-style: normal;
         }
 
 
@@ -216,22 +236,24 @@
 
         /* Template C: Outro (CTA Focus) */
         .template-c .main-text-zone {
-            justify-content: flex-start;
-            padding-top: 40px;
+            justify-content: center;
+            /* Center Content Block */
+            align-items: center;
+            text-align: center;
+            padding-top: 0;
+            gap: 60px;
+            /* Space between elements */
         }
 
         .template-c .visual-zone {
             display: flex;
-            /* Position Bottom Left */
-            justify-content: flex-start;
-            /* Left align */
+            /* Position Bottom Left relative to logic, but visually we place it absolutely/fixed for this specific design */
+            justify-content: center;
             align-items: flex-end;
-            /* Bottom align */
             margin-top: auto;
-            margin-left: 40px;
-            /* Offset from edge */
-            margin-bottom: 40px;
+            margin-bottom: 0;
             min-height: auto;
+            /* Override grid placement for specific look? No, keep logic. */
         }
 
         /* --- TYPOGRAPHY --- */
@@ -242,12 +264,50 @@
             font-weight: 800;
             font-style: italic;
             text-transform: uppercase;
-            color: var(--primary-color);
+            color: var(--secondary-color);
+            /* Blue 1 */
             margin: 0;
-            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.5);
             text-align: center;
             word-break: break-word;
             /* Prevent overflow */
+        }
+
+        /* Specific Outro Styles */
+        .outro-title {
+            font-family: var(--font-main);
+            font-size: 100px;
+            font-weight: 400;
+            /* Regular/Light? Looks thinner in screenshot? Or just Italic? */
+            font-style: italic;
+            color: var(--secondary-color);
+            /* Light Blue */
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .outro-subtitle {
+            font-family: var(--font-main);
+            font-size: 90px;
+            font-weight: 400;
+            font-style: italic;
+            color: var(--secondary-color);
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+            margin-top: 60px;
+            /* Space from title */
+        }
+
+        .outro-url {
+            font-family: var(--font-main);
+            font-size: 55px;
+            font-weight: 900;
+            /* Bold */
+            color: var(--secondary-color);
+            text-decoration: none;
+            margin-top: 20px;
+            display: block;
         }
 
         .header-text {
@@ -301,50 +361,44 @@
             gap: 10px;
         }
 
-        /* Outro URL Style */
-        .outro-url {
-            font-family: var(--font-main);
-            font-size: 40px;
-            font-weight: 800;
-            color: var(--secondary-color);
-            text-decoration: none;
-            border-bottom: 4px solid var(--accent-color);
-            padding-bottom: 5px;
-        }
 
         /* --- LIKE & COMMENT (OUTRO) --- */
+        /* Positioned Bottom Left-ish */
         .like-comment-container {
+            position: absolute;
+            /* Float it */
+            bottom: 160px;
+            /* Align with footer/bottom area */
+            left: 170px;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-            /* Left align */
-            gap: 30px;
-            transform: rotate(-5deg);
-            /* More playful angle */
+            gap: 20px;
+            transform: rotate(0deg);
+            /* Straight */
         }
 
         .like-comment-text {
             font-family: var(--font-hand);
-            font-size: 70px;
-            /* Slightly smaller to fit better */
+            font-size: 80px;
             font-weight: 700;
             color: #333;
-            line-height: 0.9;
+            line-height: 1.1;
             text-align: right;
         }
 
         .like-comment-arrow {
-            width: 70px;
-            height: 100px;
+            width: 80px;
+            height: 120px;
+            margin-top: 10px;
+            /* Push arrow down slightly */
         }
 
         .like-comment-arrow path {
             fill: none;
             stroke: #333;
-            stroke-width: 6;
+            stroke-width: 8;
             stroke-linecap: round;
             stroke-linejoin: round;
-            filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.1));
         }
     </style>
 </head>

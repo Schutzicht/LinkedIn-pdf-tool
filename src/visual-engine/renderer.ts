@@ -87,92 +87,81 @@ export class VisualRenderer {
     }
 
     private generateSlideHtml(slide: Slide): { html: string, templateClass: string } {
-        let templateClass = 'template-b'; // Default: Content slide
+        let templateClass = 'template-b'; // Default
         let visualHtml = '';
         let ctaHtml = '';
+        let headerContent = '';
+        let mainContent = '';
+        let footerLeft = '';
 
-        // --- 1. Rule-Based Template Selection ---
+        // --- 1. SLIDE TYPE LOGIC ---
+
         if (slide.type === 'intro') {
-            templateClass = 'template-a'; // Cover + Visual
+            templateClass = 'template-a';
 
-            // INTRO VISUAL LOGIC:
-            // If the system (Gemini) provided an image keyword or we have a mechanism to select one, we would insert an <img> tag here.
-            // For now, we create the container that *can* hold the image, satisfying the "backend must place it" requirement.
-            // Placeholder Logic:
+            // Intro Visual
             visualHtml = `
                 <div class="visual-placeholder">
-                    <!-- 
-                        BACKEND LOGIC: 
-                        If we had a real image URL, we would inject: 
-                        <img src="${slide.content.imageKeyword || 'default.png'}" alt="Visual">
-                    -->
                     <div class="visual-placeholder-text">
                         <span>🖼️</span><br>
                         (Visual wordt hier ingeladen)
                     </div>
                 </div>`;
 
-        } else if (slide.type === 'outro' || slide.type === 'engagement') {
-            templateClass = 'template-c'; // Engagement / Data
+            // Intro Content
+            if (slide.content.subtitle) headerContent = `<div class="header-text">${slide.content.subtitle}</div>`;
+            if (slide.content.title) mainContent = `<h1>${slide.content.title}</h1>`;
 
-            // OUTRO VISUAL: Like & Comment (Bottom Left)
+            // Intro Footer/CTA
+            footerLeft = `<div class="citation-text">Swipe voor meer 👉</div>`;
+            ctaHtml = `<div class="cta-badge">Swipe 👉</div>`;
+
+        } else if (slide.type === 'outro' || slide.type === 'engagement') {
+            templateClass = 'template-c';
+
+            // OUTRO CONTENT (Strictly Hardcoded as requested)
+            // titles same size, spacer, smaller url
+            mainContent = `
+                <div class="outro-title">DANKJEWEL!</div>
+                <div class="outro-spacer"></div>
+                <div class="outro-title">MEER VRAGEN?</div>
+                <a href="https://www.businessverbeteraars.nl" class="outro-url">www.businessverbeteraars.nl</a>
+            `;
+
+            // LIKE & COMMENT visual (Bottom Left)
             visualHtml = `
                 <div class="like-comment-container">
                     <div class="like-comment-text">
                         Like &<br>comment
                     </div>
                     <svg class="like-comment-arrow" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Hand drawn arrow pointing down -->
-                         <path d="M 25 10 Q 20 40 25 70 M 25 70 L 10 50 M 25 70 L 40 50" />
+                         <path d="M 25 10 L 25 90 M 10 70 L 25 90 L 40 70" />
                     </svg>
                 </div>
             `;
 
+            // Clean Footer (Only Logo on right, which is in template struct)
+            footerLeft = '';
+            ctaHtml = '';
+
         } else {
-            // Content slides
+            // STANDARD CONTENT SLIDE
             templateClass = 'template-b';
+
+            if (slide.content.subtitle) headerContent = `<div class="header-text">${slide.content.subtitle}</div>`;
+
+            if (slide.content.title) mainContent += `<h1>${slide.content.title}</h1>`;
+
+            if (slide.content.body) {
+                let formattedBody = slide.content.body.replace(/\n/g, '<br>');
+                formattedBody = formattedBody.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
+                mainContent += `<div class="body-text">${formattedBody}</div>`;
+            }
+
+            if (slide.content.footer) footerLeft = `<div class="citation-text">${slide.content.footer}</div>`;
         }
 
-        // --- 2. Zone Content Generation ---
-
-        // Header Zone
-        const headerContent = slide.content.subtitle
-            ? `<div class="header-text">${slide.content.subtitle}</div>`
-            : '';
-
-        // Main Text Zone
-        let mainContent = '';
-        if (slide.content.title) {
-            mainContent += `<h1>${slide.content.title}</h1>`;
-        }
-        if (slide.content.body) {
-            let formattedBody = slide.content.body.replace(/\n/g, '<br>');
-            // Simple bolding: *text* -> <strong>text</strong>
-            formattedBody = formattedBody.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
-            mainContent += `<div class="body-text">${formattedBody}</div>`;
-        }
-
-        // Footer Zone (Left side optional text)
-        const footerLeft = slide.content.footer
-            ? `<div class="citation-text">${slide.content.footer}</div>`
-            : (slide.type === 'intro' ? `<div class="citation-text">Swipe voor meer 👉</div>` : '');
-
-        // CTA Zone (Strict Rules)
-        if (slide.type === 'intro' || (slide.content.cta && slide.content.cta.includes('Swipe'))) {
-            ctaHtml = `
-                <div class="cta-badge">
-                   Swipe 👉
-                </div>
-            `;
-        } else if (slide.type === 'outro') {
-            // OUTRO CTA: URL
-            ctaHtml = `
-                <div class="outro-url">
-                   www.businessverbeteraars.nl
-                </div>
-            `;
-        }
-
+        // --- 2. HTML ASSEMBLY ---
         // Combine into the HTML structure expected by the grid layout
         const zonesHtml = `
             <div class="header-zone">${headerContent}</div>
@@ -183,7 +172,6 @@ export class VisualRenderer {
                 <div class="footer-left-content">${footerLeft}</div>
                 <div class="footer-right-content">
                     <div class="footer-branding">
-                        <!-- REMOVED Text, ONLY Logo right-aligned -->
                         <img src="https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg" alt="Logo" class="footer-logo-img">
                     </div>
                 </div>

@@ -19,7 +19,8 @@ export class ContentProcessor {
         console.log("Using model:", CONFIG.ai.model);
 
         if (!CONFIG.ai.apiKey) {
-            throw new Error("Missing API Key");
+            console.error("❌ CRITICAL: API Key is missing in environment variables!");
+            throw new Error("API Key is missing on Render. Please add GEMINI_API_KEY to Environment Variables.");
         }
 
         const prompt = `

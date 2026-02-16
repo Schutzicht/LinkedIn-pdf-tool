@@ -123,7 +123,19 @@ export class ContentProcessor {
             return JSON.parse(jsonMatch[0]);
         } catch (error: any) {
             console.error("AI Generation failed:", error);
-            throw new Error(`AI fout: ${error.message}`);
+
+            // Diagnostic: List available models if prompt fails
+            try {
+                console.log("Attempting to list available models for this key...");
+                // Actually list models via REST API to verify Key permissions
+                const models = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.ai.apiKey}`);
+                const modelsData = await models.json();
+                console.log("📄 Available Models for this Key:", JSON.stringify(modelsData, null, 2));
+            } catch (listError) {
+                console.error("Could not list models:", listError);
+            }
+
+            throw new Error(`AI fout: ${error.message}. (Check Render Logs for available models)`);
         }
     }
 }

@@ -100,12 +100,12 @@ export class VisualRenderer {
             templateClass = 'template-a';
 
             // Intro Visual
+            // Replaced placeholder with a static high-quality business image for now
             visualHtml = `
-                <div class="visual-placeholder">
-                    <div class="visual-placeholder-text">
-                        <span>🖼️</span><br>
-                        (Visual wordt hier ingeladen)
-                    </div>
+                <div class="visual-container">
+                    <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000" 
+                         alt="Intro Visual" 
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
                 </div>`;
 
             // Intro Content

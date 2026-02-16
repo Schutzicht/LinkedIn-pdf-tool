@@ -49,7 +49,7 @@ export class VisualRenderer {
             const slide = data.slides[i];
             if (!slide) continue;
 
-            const { html, templateClass } = this.generateSlideHtml(slide);
+            const { html, templateClass } = this.generateSlideHtml(slide, data.iconKeyword);
 
             // Set content
             await page.setContent(this.templateHtml, { waitUntil: 'domcontentloaded' });
@@ -86,7 +86,7 @@ export class VisualRenderer {
         await page.close();
     }
 
-    private generateSlideHtml(slide: Slide): { html: string, templateClass: string } {
+    private generateSlideHtml(slide: Slide, iconKeyword?: string): { html: string, templateClass: string } {
         let templateClass = 'template-b'; // Default
         let visualHtml = '';
         let ctaHtml = '';
@@ -100,12 +100,16 @@ export class VisualRenderer {
             templateClass = 'template-a';
 
             // Intro Visual
-            // Replaced placeholder with a static high-quality business image for now
+            // Dynamic Icon Generation based on Keyword
+            const keyword = iconKeyword || 'business'; // fallback
+            // Using Pollinations.ai for instant AI vector icon generation without API key
+            const iconUrl = `https://image.pollinations.ai/prompt/minimalist%20flat%20vector%20icon%20of%20${keyword}%20simple%20orange%20and%20blue%20colors%20white%20background?width=800&height=800&nologo=true&seed=${Math.random()}`;
+
             visualHtml = `
-                <div class="visual-container">
-                    <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000" 
-                         alt="Intro Visual" 
-                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                <div class="visual-container" style="display: flex; align-items: center; justify-content: center; padding: 40px;">
+                    <img src="${iconUrl}" 
+                         alt="Generated Icon: ${keyword}" 
+                         style="width: 100%; height: auto; max-width: 500px; object-fit: contain; mix-blend-mode: multiply;">
                 </div>`;
 
             // Intro Content

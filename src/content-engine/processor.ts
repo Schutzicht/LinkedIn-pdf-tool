@@ -19,8 +19,15 @@ export class ContentProcessor {
         console.log("Using model:", CONFIG.ai.model);
 
         if (!CONFIG.ai.apiKey) {
-            console.error("❌ CRITICAL: API Key is missing in environment variables!");
-            throw new Error("API Key is missing on Render. Please add GEMINI_API_KEY to Environment Variables.");
+            console.error("❌ CRITICAL: GEMINI_API_KEY is missing in environment variables!");
+            throw new Error("API Key configuration error. Please ensure GEMINI_API_KEY is allowed in Render Environment.");
+        }
+
+        // Debug Log (Masked)
+        const keyMasked = CONFIG.ai.apiKey ? `${CONFIG.ai.apiKey.substring(0, 4)}...${CONFIG.ai.apiKey.slice(-4)}` : 'MISSING';
+        console.log(`🔑 Using API Key: ${keyMasked}`);
+        if (!CONFIG.ai.apiKey.startsWith('AIza')) {
+            console.warn("⚠️ WARNING: API Key does not start with 'AIza'. It might be invalid.");
         }
 
         const prompt = `

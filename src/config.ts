@@ -32,8 +32,8 @@ export const BRAND = {
 
 export const CONFIG = {
     ai: {
-        apiKey: process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY,
-        model: process.env.AI_MODEL || 'gemini-1.5-flash',
+        apiKey: process.env.GEMINI_API_KEY,
+        model: 'gemini-1.5-flash',
         temperature: 0.7
     }
 };

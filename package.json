@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "echo 'Skipping build step - using ts-node for production'",
-    "start": "ts-node src/server.ts",
+    "build": "tsc && mkdir -p dist/visual-engine/templates && cp src/visual-engine/templates/template.html dist/visual-engine/templates/",
+    "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

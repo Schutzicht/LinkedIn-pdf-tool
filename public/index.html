@@ -331,6 +331,14 @@
                         </div>
                     ` : ''}
 
+                    ${slide.type === 'intro' ? `
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Afbeelding URL (Visual)</label>
+                            <input type="text" class="w-full p-2 rounded border border-slate-200 text-sm" placeholder="https://..." value="${slide.content.imageUrl || ''}" onchange="updateSlideData(${index}, 'imageUrl', this.value)">
+                            <p class="text-[10px] text-slate-400 mt-1">Plak hier een link naar een afbeelding.</p>
+                        </div>
+                    ` : ''}
+
                     ${slide.content.title !== undefined ? `
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1">Titel</label>

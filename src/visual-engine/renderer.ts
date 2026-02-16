@@ -100,13 +100,23 @@ export class VisualRenderer {
             templateClass = 'template-a';
 
             // Intro Visual
-            visualHtml = `
-                <div class="visual-placeholder">
-                    <div class="visual-placeholder-text">
-                        <span>🖼️</span><br>
-                        (Visual wordt hier ingeladen)
+            if (slide.content.imageUrl) {
+                // User provided an image URL
+                visualHtml = `
+                    <div class="visual-container" style="width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0;">
+                         <img src="${slide.content.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Visual">
                     </div>
-                </div>`;
+                `;
+            } else {
+                // Placeholder
+                visualHtml = `
+                    <div class="visual-placeholder">
+                        <div class="visual-placeholder-text">
+                            <span>🖼️</span><br>
+                            (Plak een URL in de editor)
+                        </div>
+                    </div>`;
+            }
 
             // Intro Content
             if (slide.content.subtitle) headerContent = `<div class="header-text">${slide.content.subtitle}</div>`;

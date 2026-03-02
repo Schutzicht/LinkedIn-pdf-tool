@@ -104,6 +104,7 @@ export class VisualRenderer {
             width: '1638px',
             height: '2048px',
             printBackground: true,
+            preferCSSPageSize: true,
             margin: { top: 0, right: 0, bottom: 0, left: 0 }
         });
         console.log(`Rendered PDF: ${pdfFilename}`);

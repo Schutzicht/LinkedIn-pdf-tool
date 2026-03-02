@@ -24,17 +24,31 @@
         }
 
         body {
+            /* Width fixed for PDF, height auto grows with slides */
             width: var(--canvas-width);
-            height: var(--canvas-height);
+            min-height: var(--canvas-height);
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
             font-family: var(--font-main);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            /* Stack slides vertically */
             align-items: center;
-            overflow: hidden;
             box-sizing: border-box;
+            /* overflow: hidden; Removed so slides can stack */
+        }
+
+        .slide-wrapper {
+            width: var(--canvas-width);
+            height: var(--canvas-height);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            page-break-after: always;
+            /* Force PDF page break */
+            break-after: page;
+            position: relative;
         }
 
         /* HARD ZONE: The Paper */
@@ -404,8 +418,8 @@
 </head>
 
 <body>
-    <!-- Template Class injected via JS -->
-    <div class="slide-container" id="slide-container">
+    <!-- Carousel Root injected via JS -->
+    <div id="carousel-root">
         <!-- ZONES Injected Here -->
     </div>
 </body>

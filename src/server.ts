@@ -2,7 +2,6 @@ import express from 'express';
 import * as path from 'path';
 import { ContentProcessor } from './content-engine/processor';
 import { VisualRenderer } from './visual-engine/renderer';
-import archiver from 'archiver';
 import * as fs from 'fs';
 
 const app = express();
@@ -25,32 +24,16 @@ async function processAndRespond(res: express.Response, carouselData: any) {
     const outputDir = path.join(__dirname, '../output', `session-${Date.now()}`);
     await renderer.renderCarousel(carouselData, outputDir);
 
-    // Generate ZIP
-    const zipName = 'carousel.zip';
-    const zipPath = path.join(outputDir, zipName);
-    const output = fs.createWriteStream(zipPath);
-    const archive = archiver('zip', { zlib: { level: 9 } });
-
-    await new Promise<void>((resolve, reject) => {
-        output.on('close', resolve);
-        archive.on('error', reject);
-        archive.pipe(output);
-
-        // Add all PNG files from the directory
-        archive.glob('*.png', { cwd: outputDir });
-        archive.finalize();
-    });
-
     // Return paths
     const relativePath = path.relative(path.join(__dirname, '../output'), outputDir);
     const imageUrls = carouselData.slides.map((_: any, i: number) => `/output/${relativePath}/slide-${i + 1}.png`);
-    const zipUrl = `/output/${relativePath}/${zipName}`;
+    const pdfUrl = `/output/${relativePath}/carousel.pdf`;
 
     res.json({
         success: true,
         data: carouselData,
         images: imageUrls,
-        zipUrl: zipUrl
+        pdfUrl: pdfUrl
     });
 }
 

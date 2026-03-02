@@ -45,43 +45,67 @@ export class VisualRenderer {
         // Add console log forwarding for debug
         page.on('console', (msg: any) => console.log('PAGE LOG:', msg.text()));
 
+        let combinedHtml = '';
+
         for (let i = 0; i < data.slides.length; i++) {
             const slide = data.slides[i];
             if (!slide) continue;
 
             const { html, templateClass } = this.generateSlideHtml(slide);
-
-            // Set content
-            await page.setContent(this.templateHtml, { waitUntil: 'domcontentloaded' });
-
-            // Inject Content & Classes
-            await page.evaluate((html: string, templateClass: string) => {
-                const container = document.getElementById('slide-container');
-                if (container) {
-                    container.innerHTML = html; // Inject the ZONES content
-                    container.className = `slide-container ${templateClass}`;
-                }
-            }, html, templateClass);
-
-            // Wait for images
-            await page.evaluate(async () => {
-                const selectors = Array.from(document.querySelectorAll("img"));
-                await Promise.all(selectors.map(img => {
-                    if (img.complete) return;
-                    return new Promise((resolve) => {
-                        img.addEventListener('load', resolve);
-                        img.addEventListener('error', resolve);
-                    });
-                }));
-            });
-
-            const filename = `slide-${i + 1}.png`;
-            await page.screenshot({
-                path: path.join(outputDir, filename),
-                omitBackground: false
-            });
-            console.log(`Rendered ${filename} (${templateClass})`);
+            combinedHtml += `
+                <div class="slide-wrapper" id="slide-wrapper-${i}">
+                    <div class="slide-container ${templateClass}">
+                        ${html}
+                    </div>
+                </div>
+            `;
         }
+
+        // Set content once
+        await page.setContent(this.templateHtml, { waitUntil: 'domcontentloaded' });
+
+        // Inject Content & Classes
+        await page.evaluate((html: string) => {
+            const container = document.getElementById('carousel-root');
+            if (container) {
+                container.innerHTML = html; // Inject all slides
+            }
+        }, combinedHtml);
+
+        // Wait for images
+        await page.evaluate(async () => {
+            const selectors = Array.from(document.querySelectorAll("img"));
+            await Promise.all(selectors.map(img => {
+                if (img.complete) return;
+                return new Promise((resolve) => {
+                    img.addEventListener('load', resolve);
+                    img.addEventListener('error', resolve);
+                });
+            }));
+        });
+
+        // 1. Take individual PNG Screenshots
+        for (let i = 0; i < data.slides.length; i++) {
+            const filename = `slide-${i + 1}.png`;
+            const element = await page.$(`#slide-wrapper-${i}`);
+            if (element) {
+                await element.screenshot({
+                    path: path.join(outputDir, filename),
+                    omitBackground: false
+                });
+                console.log(`Rendered PNG: ${filename}`);
+            }
+        }
+
+        // 2. Generate multi-page PDF
+        const pdfFilename = 'carousel.pdf';
+        await page.pdf({
+            path: path.join(outputDir, pdfFilename),
+            width: 1638,
+            height: 2048,
+            printBackground: true
+        });
+        console.log(`Rendered PDF: ${pdfFilename}`);
 
         await page.close();
     }

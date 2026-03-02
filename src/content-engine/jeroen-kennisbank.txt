@@ -1,0 +1,18 @@
+Dit is het kennisbank-bestand voor Jeroen van Business Verbeteraars.
+Plak hieronder al zijn LinkedIn posts, columns, blogs en andere teksten. 
+De AI zal dit bestand uitlezen om de exacte tone-of-voice, zinsopbouw en woordkeuze over te nemen.
+
+====================
+VOORBEELD TEKST 1:
+====================
+[Plak hier een recente LinkedIn post van Jeroen]
+
+====================
+VOORBEELD TEKST 2:
+====================
+[Plak hier nog een tekst]
+
+====================
+VOORBEELD TEKST 3:
+====================
+[Plak hier nog een tekst, hoe meer hoe beter!]

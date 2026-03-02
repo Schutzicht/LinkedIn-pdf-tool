@@ -140,7 +140,7 @@ export class VisualRenderer {
             footerLeft = `<div class="citation-text">Swipe voor meer 👉</div>`;
             ctaHtml = `<div class="cta-badge">Swipe 👉</div>`;
 
-        } else if (slide.type === 'outro' || slide.type === 'engagement') {
+        } else if (slide.type === 'outro') {
             templateClass = 'template-c';
 
             // OUTRO CONTENT (Strictly Hardcoded as requested)
@@ -168,6 +168,30 @@ export class VisualRenderer {
             footerLeft = '';
             ctaHtml = '';
 
+        } else if (slide.type === 'engagement') {
+            // STANDARD CONTENT + LIKE/COMMENT VISUAL
+            templateClass = 'template-b';
+
+            if (slide.content.subtitle) headerContent = `<div class="header-text">${slide.content.subtitle}</div>`;
+
+            if (slide.content.title) mainContent += `<h1>${slide.content.title}</h1>`;
+
+            if (slide.content.body) {
+                let formattedBody = slide.content.body.replace(/\n/g, '<br>');
+                formattedBody = formattedBody.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
+                mainContent += `<div class="body-text">${formattedBody}</div>`;
+            }
+
+            if (slide.content.footer) footerLeft = `<div class="citation-text">${slide.content.footer}</div>`;
+
+            // Add Like & Comment visual to engagement slide explicitly
+            visualHtml = `
+                <div class="like-comment-container" style="bottom: 100px; right: 80px; left: auto;">
+                    <div class="like-comment-text" style="font-size: 50px;">
+                        Wat vind<br>jij?
+                    </div>
+                </div>
+            `;
         } else {
             // STANDARD CONTENT SLIDE
             templateClass = 'template-b';

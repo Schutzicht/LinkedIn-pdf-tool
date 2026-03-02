@@ -23,20 +23,20 @@
             --canvas-height: 2048px;
         }
 
+        @page {
+            size: 1638px 2048px;
+            margin: 0;
+        }
+
         body {
             /* Width fixed for PDF, height auto grows with slides */
             width: var(--canvas-width);
-            min-height: var(--canvas-height);
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
             font-family: var(--font-main);
-            display: flex;
-            flex-direction: column;
-            /* Stack slides vertically */
-            align-items: center;
+            display: block;
             box-sizing: border-box;
-            /* overflow: hidden; Removed so slides can stack */
         }
 
         .slide-wrapper {

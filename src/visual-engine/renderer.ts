@@ -101,9 +101,10 @@ export class VisualRenderer {
         const pdfFilename = 'carousel.pdf';
         await page.pdf({
             path: path.join(outputDir, pdfFilename),
-            width: 1638,
-            height: 2048,
-            printBackground: true
+            width: '1638px',
+            height: '2048px',
+            printBackground: true,
+            margin: { top: 0, right: 0, bottom: 0, left: 0 }
         });
         console.log(`Rendered PDF: ${pdfFilename}`);
 

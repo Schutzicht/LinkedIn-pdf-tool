@@ -6,4 +6,8 @@ dist
 Dockerfile
 .dockerignore
 .gitignore
+.DS_Store
 scripts
+aangeleverde-content
+*.md
+*.pdf

@@ -1,6 +1,17 @@
+# --- Stage 1: Build ---
+FROM node:18-slim AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# --- Stage 2: Production ---
 FROM node:18-slim
 
-# Install encryption dependencies (Puppeteer/Chromium needs these)
+# Puppeteer/Chromium dependencies
 RUN apt-get update \
   && apt-get install -y wget gnupg \
   && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
@@ -10,23 +21,19 @@ RUN apt-get update \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
-# App setup
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+ENV NODE_ENV=production
+
 WORKDIR /app
+
+# Alleen production dependencies
 COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Env - Set before install to skip Puppeteer download
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-
-RUN npm install
-COPY . .
-
-# Build TypeScript
-RUN npm run build
-
-# Env
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+# Kopieer gebouwde assets
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node", "dist/server.js"]

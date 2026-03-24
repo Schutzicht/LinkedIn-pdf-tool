@@ -1,145 +1,100 @@
-import type { CarouselData, Slide } from '../types';
-import { BRAND, CONFIG } from '../config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import * as fs from 'fs';
+import type { CarouselData } from '../types';
+import { CONFIG } from '../config';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import * as fs from 'fs/promises';
 import * as path from 'path';
+import { buildCarouselPrompt } from './prompts/carousel.prompt';
+import { logger } from '../utils/logger';
+import { z } from 'zod';
+
+// --- Zod schema voor AI response validatie ---
+const SlideContentSchema = z.object({
+    title: z.string().optional(),
+    body: z.string().optional(),
+    subtitle: z.string().optional(),
+    footer: z.string().optional(),
+    cta: z.string().optional(),
+    imageKeyword: z.string().optional(),
+});
+
+const SlideSchema = z.object({
+    type: z.enum(['intro', 'content', 'engagement', 'outro'] as const),
+    id: z.string(),
+    content: SlideContentSchema,
+    visuals: z.object({
+        icon: z.string().optional(),
+        backgroundImage: z.string().optional(),
+        style: z.string().optional(),
+    }).optional(),
+});
+
+const CarouselSchema = z.object({
+    title: z.string(),
+    topic: z.string(),
+    postBody: z.string(),
+    slides: z.array(SlideSchema).min(1),
+    metadata: z.object({
+        author: z.string(),
+        date: z.string(),
+    }),
+});
 
 export class ContentProcessor {
-    private genAI: GoogleGenerativeAI;
-    private model: any;
+    private model: GenerativeModel;
     private kennisbankPath: string;
+    private kennisbankCache: string | null = null;
 
     constructor() {
         if (!CONFIG.ai.apiKey) {
-            console.warn("API Key not found in environment variables. Set GEMINI_API_KEY or OPENAI_API_KEY in .env");
+            logger.warn('GEMINI_API_KEY ontbreekt in de omgevingsvariabelen. Stel deze in via .env');
         }
-        this.genAI = new GoogleGenerativeAI(CONFIG.ai.apiKey || '');
-        this.model = this.genAI.getGenerativeModel({ model: CONFIG.ai.model });
+        const genAI = new GoogleGenerativeAI(CONFIG.ai.apiKey);
+        this.model = genAI.getGenerativeModel({ model: CONFIG.ai.model });
         this.kennisbankPath = path.join(__dirname, 'jeroen-kennisbank.txt');
     }
 
-    private getKennisbankContent(): string {
+    private async getKennisbankContent(): Promise<string> {
+        if (this.kennisbankCache) return this.kennisbankCache;
+
         try {
-            if (fs.existsSync(this.kennisbankPath)) {
-                return fs.readFileSync(this.kennisbankPath, 'utf8');
-            }
-        } catch (e) {
-            console.error("Failed to read kennisbank file:", e);
+            this.kennisbankCache = await fs.readFile(this.kennisbankPath, 'utf8');
+            return this.kennisbankCache;
+        } catch {
+            logger.warn('Kennisbank bestand niet gevonden, doorgaan zonder referentiemateriaal.');
+            return 'Geen referentie materiaal gevonden.';
         }
-        return "Geen referentie materiaal gevonden.";
     }
 
     async generateCarousel(topic: string): Promise<CarouselData> {
-        console.log("Processing input with AI:", topic);
-        console.log("Using model:", CONFIG.ai.model);
-        console.log("API Key present:", !!CONFIG.ai.apiKey);
+        logger.info({ topic, model: CONFIG.ai.model }, 'Carousel genereren');
 
         if (!CONFIG.ai.apiKey) {
-            throw new Error("Missing API Key");
+            throw new Error('API Key ontbreekt — stel GEMINI_API_KEY in via .env');
         }
 
-        const kennisbank = this.getKennisbankContent();
-
-        const prompt = `
-            You are Jeroen from Business Verbeteraars. You write LinkedIn carousels and posts that are critical, reflective, and provoke thought.
-            
-            **REFERENCE STYLE (MIMIC THIS EXACTLY):**
-            Analyze the following text snippets written by Jeroen. You MUST absolutely adopt the exact rhythm, formatting choice, vocabulary, directness and sentence-length of these examples in your output:
-            
-            --- START REFERENCE MATERIAL ---
-            ${kennisbank}
-            --- END REFERENCE MATERIAL ---
-
-            **TONE OF VOICE (STRICT):**
-            - **Identity**: Experienced business coach, not a "guru". You challenge the status quo.
-            - **Style**: Direct, personal ("jij/jouw"), slightly provocative but professional. Wait with offering solutions; first expose the problem.
-            - **Structure**: Start with a hook/question, pivot to a common misconception, then offer a deeper insight.
-            - **Vocabulary**: Use words like "moed" (courage), "wisselvalligheid", "eenvoud". Avoid generic fluff.
-            - **Signature**: Often ends with a reflective question or a call to action based on mindset.
-            - **Formatting**: Use short paragraphs. Use "..." for pauses. Use "Nee: ..." to correct assumptions.
-            
-            **TOPIC:** "${topic}"
-            
-            **REQUIRED STRUCTURE (JSON ONLY):**
-            {
-                "title": "Internal Title for tracking",
-                "topic": "${topic}",
-                "postBody": "WRITE THE LINKEDIN POST HERE. Start with a hook. Use the tone described above. Include 3-5 relevant hashtags at the end (e.g. #businessverbeteraars #ondernemen).",
-                "slides": [
-                    {
-                        "type": "intro",
-                        "id": "slide-1",
-                        "content": {
-                            "subtitle": "~~~ DE VRAAG VAN VANDAAG ~~~",
-                            "title": "A provocative hook/question about the topic (Short & Punchy). E.g. 'Zijn ondernemers groeiweigeraars?'",
-                            "cta": "Swipe voor het antwoord"
-                        },
-                        "visuals": { "style": "cover" }
-                    },
-                    {
-                        "type": "content",
-                        "id": "slide-2",
-                        "content": {
-                            "body": "State the standard belief: 'Onderzoekers zeggen...'. Use data if relevant.",
-                            "footer": "Herkenbaar?"
-                        }
-                    },
-                    {
-                        "type": "content",
-                        "id": "slide-3",
-                        "content": {
-                            "body": "The Twist: 'En dat is foute boel, toch?' or 'Is dat wel zo?'. Introduces the conflict.",
-                            "footer": "Business Verbeteraars"
-                        }
-                    },
-                    {
-                        "type": "content",
-                        "id": "slide-4",
-                        "content": {
-                            "body": "The Insight. Use playful words like 'stilstandliefhebbers' or 'durfvermijders' if it fits.",
-                            "footer": "Business Verbeteraars"
-                        }
-                    },
-                     {
-                        "type": "engagement",
-                        "id": "slide-5",
-                        "content": {
-                            "body": "The Question to the reader: 'Wat is jouw antwoord op de vraag: ...?'",
-                            "cta": "Like & comment"
-                        }
-                    },
-                    {
-                        "type": "outro",
-                        "id": "slide-6",
-                        "content": {
-                            "title": "DANKJEWEL!",
-                            "subtitle": "MEER VRAGEN?",
-                            "body": "${BRAND.text.website}",
-                            "cta": "Connect"
-                        }
-                    }
-                ],
-                "metadata": {
-                    "author": "Jeroen",
-                    "date": "${new Date().toISOString()}"
-                }
-            }
-        `;
+        const kennisbank = await this.getKennisbankContent();
+        const prompt = buildCarouselPrompt(topic, kennisbank);
 
         try {
-            console.log("Sending prompt to AI...");
+            logger.debug('Prompt naar AI gestuurd...');
             const result = await this.model.generateContent(prompt);
-            console.log("AI response received. Processing...");
-            const response = await result.response;
+            const response = result.response;
             const text = response.text();
 
-            // Clean up code blocks if present
+            // Verwijder eventuele code-block markers
             const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(jsonStr);
 
-            const data: CarouselData = JSON.parse(jsonStr);
-            return data;
+            // Valideer met Zod schema
+            const validated = CarouselSchema.safeParse(parsed);
+            if (!validated.success) {
+                logger.error({ errors: validated.error.issues }, 'AI response voldoet niet aan schema');
+                throw new Error(`AI response validatie mislukt: ${validated.error.issues.map(i => i.message).join(', ')}`);
+            }
+
+            return validated.data as CarouselData;
         } catch (error) {
-            console.error("AI Generation failed:", error);
+            logger.error({ err: error }, 'AI-generatie mislukt');
             throw error;
         }
     }

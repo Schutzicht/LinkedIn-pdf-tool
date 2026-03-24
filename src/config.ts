@@ -1,39 +1,49 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Brand Configuration
-// Placeholder values - To be updated with exact Widea specs
+import * as path from 'path';
+
+// ============================================================
+// WIDEA BRAND CONFIGURATIE — Gebaseerd op stijlboek 2025
+// ============================================================
 
 export const BRAND = {
     colors: {
-        primary: '#10366b', // Dark Blue from website
-        secondary: '#00aec7', // Cyan from logo/accents
-        accent: '#f36b00', // Orange from buttons
-        text: '#1A1A1A', // Dark Grey/Black
-        background: '#F5F5F5', // Light background
-        paper: '#FFFFFF', // The 'sheet' color
+        primary: '#3D2E32',     // Grijs 1 (Black 5C) — donkere tekst/achtergrond
+        secondary: '#0081C6',   // Process Blue C — handtekening Widea blauw
+        accent: '#BF6A01',      // Aardrood — accent / highlights
+        grey2: '#56565A',       // Pantone Cool Grey 11C
+        grey3: '#989798',       // Pantone Cool Grey 7C
+        grey4: '#D0CFCC',       // Pantone Cool Grey 2C — lichte achtergrond
+        black: '#000000',
+        paper: '#F6F6F6',       // Papier kleur voor slides
+        background: '#E5E5E5',  // Canvas achtergrond
     },
     fonts: {
-        main: '"Verb", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-        highlight: '"Verb", "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+        main: '"Verb", "Segoe UI", Helvetica, Arial, sans-serif',
+        accent: '"Caveat", cursive',
     },
     layout: {
-        width: 1080,
-        height: 1080, // Square format
-        padding: 50
+        canvasWidth: 1638,
+        canvasHeight: 2048,
+        padding: 100,
     },
     text: {
-        website: 'www.businessverbeteraars.nl'
+        website: 'www.businessverbeteraars.nl',
+        brand: 'Business Verbeteraars',
     },
     images: {
-        logo: 'https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg'
-    }
-};
+        logo: 'https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg',
+    },
+} as const;
 
 export const CONFIG = {
     ai: {
-        apiKey: process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY,
-        model: process.env.AI_MODEL || 'gemini-flash-latest',
-        temperature: 0.7
-    }
-};
+        apiKey: process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || '',
+        model: process.env.AI_MODEL || 'gemini-2.0-flash',
+        temperature: 0.7,
+    },
+    paths: {
+        output: path.resolve(__dirname, '..', 'output'),
+    },
+} as const;

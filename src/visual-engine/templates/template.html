@@ -1,24 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slide Template</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Kalam:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --primary-color: #10366b;
-            --secondary-color: #00aec7;
-            --accent-color: #f36b00;
-            --paper-color: #f6f6f6;
-            --bg-color: #e5e5e5;
-            --font-main: "Montserrat", sans-serif;
-            --font-hand: "Kalam", cursive;
+            /* WIDEA HUISSTIJL 2025 */
+            --primary-color: #3D2E32;   /* Grijs 1 / Black 5C */
+            --secondary-color: #0081C6; /* Process Blue C — handtekening Widea */
+            --accent-color: #BF6A01;    /* Aardrood — accent */
+            --grey2: #56565A;           /* Pantone Cool Grey 11C */
+            --grey3: #989798;           /* Pantone Cool Grey 7C */
+            --grey4: #D0CFCC;           /* Pantone Cool Grey 2C */
+            --paper-color: #F6F6F6;
+            --bg-color: #E5E5E5;
+            --font-main: "Verb", "Segoe UI", Helvetica, Arial, sans-serif;
+            --font-hand: "Caveat", cursive;
 
-            /* Strict Canvas 1638x2048 */
+            /* Canvas 1638x2048 */
             --canvas-width: 1638px;
             --canvas-height: 2048px;
         }
@@ -64,6 +68,8 @@
             box-shadow: 4px 8px 25px rgba(0, 0, 0, 0.15);
             transform: rotate(-1deg);
             /* Subtle tilt */
+            overflow: hidden;
+            /* Clip blokken binnen de afgeronde hoeken */
 
             /* ZONES GRID SYSTEM */
             display: grid;

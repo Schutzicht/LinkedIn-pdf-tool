@@ -1,143 +1,79 @@
 import express from 'express';
 import * as path from 'path';
-import { ContentProcessor } from './content-engine/processor';
-import { VisualRenderer } from './visual-engine/renderer';
-import * as fs from 'fs';
+import helmet from 'helmet';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import { initServices, renderer } from './services';
+import { CONFIG } from './config';
+import { cleanOldOutputFolders } from './utils/cleanup';
+import { logger } from './utils/logger';
+import generateRoute from './routes/generate.route';
+import renderRoute from './routes/render.route';
+import debugRoute from './routes/debug.route';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// --- Security Middleware ---
+app.use(helmet({
+    contentSecurityPolicy: false, // Puppeteer-generated content needs inline styles
+}));
+app.use(cors());
+
+// --- Rate Limiting ---
+const generateLimiter = rateLimit({
+    windowMs: 60_000,  // 1 minuut
+    max: 5,            // max 5 generate requests per minuut
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, error: 'Te veel verzoeken. Probeer het over een minuut opnieuw.' },
+});
+
+// --- Body Parsing ---
 app.use(express.json());
-// Serve static files from 'public' directory
+
+// --- Static Files ---
 app.use(express.static(path.join(__dirname, '../public')));
-// Serve generated images from 'output' directory
-app.use('/output', express.static(path.join(__dirname, '../output')));
+app.use('/output', express.static(CONFIG.paths.output));
 
-const contentProcessor = new ContentProcessor();
-const renderer = new VisualRenderer();
+// --- Routes ---
+app.use('/api/generate', generateLimiter, generateRoute);
+app.use('/api/render', renderRoute);
+app.use('/api', debugRoute);
 
-// Initialize renderer (launch browser)
-renderer.init().then(() => console.log('Visual Renderer ready'));
+// --- Cleanup interval (elke 10 min i.p.v. per-request) ---
+const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+const cleanupTimer = setInterval(() => {
+    cleanOldOutputFolders(CONFIG.paths.output);
+}, CLEANUP_INTERVAL_MS);
 
-// Helper to handle rendering and response
-async function processAndRespond(res: express.Response, carouselData: any) {
-    const outputDir = path.join(__dirname, '../output', `session-${Date.now()}`);
-    await renderer.renderCarousel(carouselData, outputDir);
-
-    // Return paths
-    const relativePath = path.relative(path.join(__dirname, '../output'), outputDir);
-    const imageUrls = carouselData.slides.map((_: any, i: number) => `/output/${relativePath}/slide-${i + 1}.png`);
-    const pdfUrl = `/output/${relativePath}/carousel.pdf`;
-
-    res.json({
-        success: true,
-        data: carouselData,
-        images: imageUrls,
-        pdfUrl: pdfUrl
+// --- Start ---
+initServices().then(() => {
+    const server = app.listen(port, () => {
+        logger.info({ port, env: process.env.NODE_ENV || 'development' }, 'Server gestart');
     });
-}
 
-app.post('/api/generate', async (req, res) => {
-    try {
-        const { topic } = req.body;
-        console.log(`Received request for: ${topic}`);
+    // --- Graceful Shutdown ---
+    const shutdown = async (signal: string) => {
+        logger.info({ signal }, 'Shutdown signaal ontvangen');
+        clearInterval(cleanupTimer);
 
-        // 1. Generate Content
-        const carouselData = await contentProcessor.generateCarousel(topic);
-
-        // 2. Process Visuals & ZIP
-        await processAndRespond(res, carouselData);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown generation error'
-        });
-    }
-});
-
-app.post('/api/render', async (req, res) => {
-    try {
-        const { slides } = req.body;
-        console.log(`Received render request for: ${slides.length} slides`);
-
-        // Reconstruct carousel object (or just pass slides if that's what renderer expects)
-        // Renderer expects { slides: Slide[] }
-        const carouselData = { slides };
-
-        await processAndRespond(res, carouselData);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown render error'
-        });
-    }
-});
-
-// --- DEBUG ENDPOINT ---
-import { CONFIG } from './config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-app.get('/api/test-ai', async (req, res) => {
-    try {
-        const key = CONFIG.ai.apiKey;
-        const modelName = CONFIG.ai.model;
-
-        const debugInfo = {
-            envApiKeyPresent: !!process.env.GEMINI_API_KEY,
-            configApiKeyPresent: !!key,
-            apiKeyMasked: key ? `${key.substring(0, 4)}...` : 'MISSING',
-            modelConfigured: modelName,
-            testTime: new Date().toISOString()
-        };
-
-        if (!key) throw new Error("API Key is missing in Config");
-
-        const genAI = new GoogleGenerativeAI(key);
-        const model = genAI.getGenerativeModel({ model: modelName });
-
-        console.log("TEST: Sending prompt...");
-        const result = await model.generateContent("Test connection. Reply with 'OK'.");
-        const response = await result.response;
-        const text = response.text();
-
-        res.json({
-            success: true,
-            message: "AI Connection Successful",
-            response: text,
-            debug: debugInfo
+        server.close(async () => {
+            await renderer.close();
+            logger.info('Server afgesloten');
+            process.exit(0);
         });
 
-    } catch (error: any) {
-        console.error("TEST FAILED:", error);
+        // Forceer afsluiting na 10 seconden
+        setTimeout(() => {
+            logger.error('Forceer afsluiting na timeout');
+            process.exit(1);
+        }, 10_000);
+    };
 
-        // Try to list models to see if key works at all
-        let availableModels = "Could not list";
-        try {
-            // @ts-ignore
-            if (CONFIG.ai.apiKey) {
-                const m = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.ai.apiKey}`);
-                const d = await m.json();
-                availableModels = d;
-            }
-        } catch (e) { }
-
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            availableModelsRaw: availableModels,
-            debug: {
-                modelConfigured: CONFIG.ai.model,
-                envApiKeyStarts: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 4) : 'NONE'
-            }
-        });
-    }
-});
-
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    console.log(`API Key configured: ${!!process.env.GEMINI_API_KEY}`);
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+}).catch((err: unknown) => {
+    logger.fatal({ err }, 'Initialisatie mislukt');
+    process.exit(1);
 });

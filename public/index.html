@@ -5,60 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Verbeteraars | Content Tool</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="/styles.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/favicon-v2.svg">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10366b',
-                        secondary: '#00aec7',
-                        accent: '#f36b00',
-                        bg: '#f8fafc',
-                        surface: '#ffffff',
-                    },
-                    fontFamily: {
-                        sans: ['Montserrat', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #f8fafc;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, #10366b 0%, #00aec7 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #f36b00;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
 </head>
 
 <body class="min-h-screen flex flex-col items-center py-10 px-4 text-slate-800">
@@ -79,7 +29,7 @@
     <main class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-12">
 
         <!-- Input Column -->
-        <div class="space-y-8 animate-fade-in-up">
+        <div class="space-y-8">
             <div>
                 <h1 class="text-4xl lg:text-5xl font-extrabold mb-4 leading-tight">
                     Van idee naar <br>
@@ -103,7 +53,8 @@
                     <button id="generateBtn" onclick="generateCarousel()"
                         class="bg-accent hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-orange-500/30 transform hover:-translate-y-1 transition-all duration-200 flex items-center gap-3">
                         <span>Genereren</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                            fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
                                 clip-rule="evenodd" />
@@ -111,8 +62,6 @@
                     </button>
                 </div>
             </div>
-
-
 
             <!-- Editor Section -->
             <div id="editorSection" class="hidden space-y-6 bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
@@ -145,7 +94,7 @@
                 class="absolute inset-0 bg-gradient-to-tr from-blue-50 to-cyan-50 rounded-3xl -z-10 transform rotate-1">
             </div>
 
-            <!-- Loading State (Moved HERE, outside previewSection) -->
+            <!-- Loading State -->
             <div id="loading" class="hidden h-full flex flex-col items-center justify-center">
                 <div
                     class="flex flex-col items-center justify-center p-12 bg-surface rounded-2xl border border-slate-100 shadow-sm text-center">
@@ -198,7 +147,8 @@
 
             <!-- Empty State -->
             <div id="emptyState" class="h-full flex flex-col items-center justify-center text-center p-10 opacity-60">
-                <div class="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mb-6 text-4xl">🚀</div>
+                <div class="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mb-6 text-4xl">🚀
+                </div>
                 <h3 class="text-xl font-bold text-slate-400">Nog geen output</h3>
                 <p class="text-slate-400 max-w-xs mx-auto mt-2">Voer hiernaast een onderwerp in om je eerste carousel te
                     genereren.</p>
@@ -207,214 +157,7 @@
 
     </main>
 
-    <script>
-        let currentCarouselData = null;
-
-        async function generateCarousel() {
-            const topic = document.getElementById('topicInput').value;
-            if (!topic) return alert('Voer eerst een onderwerp in!');
-
-            const btn = document.getElementById('generateBtn');
-            const loading = document.getElementById('loading');
-            const preview = document.getElementById('previewSection');
-            const emptyState = document.getElementById('emptyState');
-            const grid = document.getElementById('grid');
-            const editor = document.getElementById('editorSection');
-
-            // UI Updates
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-            loading.classList.remove('hidden');
-            emptyState.classList.add('hidden');
-            preview.classList.add('hidden');
-            editor.classList.add('hidden'); // Hide editor while generating
-            grid.innerHTML = '';
-
-            try {
-                const response = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    currentCarouselData = result.data; // Store data
-                    loading.classList.add('hidden');
-                    preview.classList.remove('hidden');
-                    editor.classList.remove('hidden'); // Show editor
-
-                    // Set Post Body
-                    document.getElementById('postBodyOutput').value = result.data.postBody || "Geen tekst gegenereerd.";
-
-                    // Render Editor Inputs
-                    renderEditor(result.data.slides);
-
-                    // Update UI with results
-                    updatePreviewUI(result);
-
-                } else {
-                    console.warn('API Error, switching to mock data:', result.error);
-                    alert('Google API is overbelast (503). Ik laad nu test-data zodat je de tool toch kunt zien!');
-                    loadMockData();
-                }
-
-            } catch (error) {
-                console.error(error);
-                alert('Fout bij verbinden (of Google 503). Ik laad test-data!');
-                loadMockData();
-            } finally {
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        function renderEditor(slides) {
-            const container = document.getElementById('slidesEditor');
-            container.innerHTML = '';
-
-            slides.forEach((slide, index) => {
-                const div = document.createElement('div');
-                div.className = 'p-4 border border-slate-100 rounded-lg bg-slate-50 space-y-3';
-                div.innerHTML = `
-                    <div class="font-bold text-sm text-slate-400 uppercase">Slide ${index + 1} (${slide.type})</div>
-                    
-                    ${slide.content.subtitle !== undefined ? `
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Header / Subtitle</label>
-                            <input type="text" class="w-full p-2 rounded border border-slate-200 text-sm" value="${slide.content.subtitle || ''}" onchange="updateSlideData(${index}, 'subtitle', this.value)">
-                        </div>
-                    ` : ''}
-
-                    ${slide.content.title !== undefined ? `
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Titel</label>
-                            <input type="text" class="w-full p-2 rounded border border-slate-200 text-sm font-bold" value="${slide.content.title || ''}" onchange="updateSlideData(${index}, 'title', this.value)">
-                        </div>
-                    ` : ''}
-
-                    ${slide.content.body !== undefined ? `
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Body Tekst</label>
-                            <textarea class="w-full p-2 rounded border border-slate-200 text-sm h-24 resize-none" onchange="updateSlideData(${index}, 'body', this.value)">${slide.content.body || ''}</textarea>
-                        </div>
-                    ` : ''}
-                    
-                    ${slide.content.footer !== undefined ? `
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Footer / Bron</label>
-                            <input type="text" class="w-full p-2 rounded border border-slate-200 text-sm" value="${slide.content.footer || ''}" onchange="updateSlideData(${index}, 'footer', this.value)">
-                        </div>
-                    ` : ''}
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function updateSlideData(index, field, value) {
-            if (currentCarouselData && currentCarouselData.slides[index]) {
-                currentCarouselData.slides[index].content[field] = value;
-            }
-        }
-
-        async function updateVisuals() {
-            if (!currentCarouselData) return;
-
-            const btn = document.querySelector('#editorSection button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Rendering...';
-            btn.disabled = true;
-
-            try {
-                const response = await fetch('/api/render', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ slides: currentCarouselData.slides })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    updatePreviewUI(result);
-                } else {
-                    alert('Error updating visuals: ' + result.error);
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Connection error');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        async function loadMockData() {
-            const mockSlides = [
-                { type: 'intro', content: { title: 'TEMPLATE A: INTRO', subtitle: 'COVER STYLE', body: 'Hier zie je de grote titel en ruimte voor een visual (placeholder).', cta: 'Swipe' } },
-                { type: 'content', content: { title: 'TEMPLATE B: CONTENT', subtitle: 'FOCUS OP TEKST', body: 'Dit is Template B. Geen afleiding, alleen tekst. De grid zorgt dat alles netjes in het midden staat.', footer: 'Bron: Strict Rules' } },
-                { type: 'content', content: { title: 'NOG EEN TEMPLATE B', subtitle: 'MEER TEKST', body: 'Let op de 1638x2048 resolutie. Dat is een flink stuk hoger dan eerst (4:5 ratio).', footer: 'Bron: Design Guidelines' } },
-                { type: 'outro', content: { title: 'TEMPLATE C: OUTRO', subtitle: 'CONCLUSIE', body: 'Hier staat de CTA centraal. Linksonder in de footer zie je het logo.', cta: 'Link in Bio' } }
-            ];
-
-            currentCarouselData = {
-                slides: mockSlides,
-                postBody: "De AI is even offline, dus hier is een placeholder tekst."
-            };
-
-            // Show Editor
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('previewSection').classList.remove('hidden');
-            document.getElementById('editorSection').classList.remove('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
-
-            document.getElementById('postBodyOutput').value = currentCarouselData.postBody;
-            renderEditor(mockSlides);
-
-            // Auto trigger render
-            updateVisuals();
-        }
-
-        function updatePreviewUI(result) {
-            const pdfBtn = document.getElementById('downloadPdfBtn');
-            const grid = document.getElementById('grid');
-
-            // PDF Button
-            if (result.pdfUrl) {
-                pdfBtn.href = result.pdfUrl;
-                pdfBtn.classList.remove('hidden');
-            } else {
-                pdfBtn.classList.add('hidden');
-            }
-
-            // Generate Slides
-            grid.innerHTML = '';
-            result.images.forEach((imgUrl, index) => {
-                const card = document.createElement('div');
-                card.className = 'group relative rounded-xl overflow-hidden shadow-lg transition-transform hover:scale-[1.02] duration-300 bg-white';
-
-                const img = document.createElement('img');
-                img.src = `${imgUrl}?t=${Date.now()}`; // Cache busting
-                img.alt = `Slide ${index + 1}`;
-                img.className = 'w-full h-auto block';
-
-                const overlay = document.createElement('div');
-                overlay.className = 'absolute inset-0 bg-primary/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center';
-                overlay.innerHTML = `<a href="${imgUrl}" download="slide-${index + 1}.png" class="bg-white text-primary font-bold py-2 px-6 rounded-full hover:bg-accent hover:text-white transition-colors">Download</a>`;
-
-                card.appendChild(img);
-                card.appendChild(overlay);
-                grid.appendChild(card);
-            });
-        }
-
-        function copyPostText() {
-            const text = document.getElementById('postBodyOutput');
-            text.select();
-            document.execCommand('copy');
-            alert('Tekst gekopieerd!');
-        }
-    </script>
+    <script src="/app.js"></script>
 </body>
 
 </html>

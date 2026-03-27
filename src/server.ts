@@ -14,6 +14,9 @@ import debugRoute from './routes/debug.route';
 const app = express();
 const port = process.env.PORT || 3000;
 
+// --- Reverse Proxy (Railway, Render, etc.) ---
+app.set('trust proxy', 1);
+
 // --- Security Middleware ---
 app.use(helmet({
     contentSecurityPolicy: false, // Puppeteer-generated content needs inline styles
@@ -26,6 +29,7 @@ const generateLimiter = rateLimit({
     max: 5,            // max 5 generate requests per minuut
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { xForwardedForHeader: false },
     message: { success: false, error: 'Te veel verzoeken. Probeer het over een minuut opnieuw.' },
 });
 

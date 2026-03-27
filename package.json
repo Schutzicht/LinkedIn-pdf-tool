@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "build:css": "tailwindcss -i ./public/src/input.css -o ./public/styles.css --minify",
-    "build:assets": "cp -r src/visual-engine/templates dist/visual-engine/templates",
+    "build:assets": "cp -r src/visual-engine/templates dist/visual-engine/templates && cp -f src/content-engine/jeroen-kennisbank.txt dist/content-engine/jeroen-kennisbank.txt 2>/dev/null || true",
     "build": "npm run build:css && tsc && npm run build:assets",
     "start": "node dist/server.js",
     "dev": "npm run build:css && ts-node src/server.ts"

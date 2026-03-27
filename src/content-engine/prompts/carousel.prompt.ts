@@ -59,7 +59,7 @@ export function buildCarouselPrompt(topic: string, kennisbank: string): string {
             "content": {
                 "title": "Short bold statement (optional, max 5 words)",
                 "body": "The main text. Keep it concise, max 3 short paragraphs.",
-                "footer": "Source or brand name"
+                "footer": "Source if applicable. LEAVE EMPTY or omit if no external source. NEVER use 'Business Verbeteraars' or similar brand names here."
             }
         }
 

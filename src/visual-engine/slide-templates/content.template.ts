@@ -16,8 +16,14 @@ export function renderContentSlide(slide: Slide, _slideIndex: number): { html: s
         mainContent += `<div class="body-text">${formatBody(slide.content.body)}</div>`;
     }
 
-    const footerLeft = slide.content.footer
-        ? `<div class="citation-text">${escapeHtml(slide.content.footer)}</div>`
+    let footerText = slide.content.footer || '';
+    // Safeguard: Never show the brand name in the citation (bottom left)
+    if (/business\s*verbeteraars/i.test(footerText)) {
+        footerText = '';
+    }
+
+    const footerLeft = footerText
+        ? `<div class="citation-text">${escapeHtml(footerText)}</div>`
         : '';
 
     const html = buildZonesHtml({ headerContent, mainContent, visualHtml: '', footerLeft, ctaHtml: '' });

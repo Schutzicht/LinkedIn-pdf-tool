@@ -22,13 +22,13 @@
             --font-main: "Outfit", "Segoe UI", Helvetica, Arial, sans-serif;
             --font-hand: "Caveat", cursive;
 
-            /* Canvas 1638x2048 */
-            --canvas-width: 1638px;
-            --canvas-height: 2048px;
+            /* Canvas 1080x1080 (LinkedIn 1:1) */
+            --canvas-width: 1080px;
+            --canvas-height: 1080px;
         }
 
         @page {
-            size: 1638px 2048px;
+            size: 1080px 1080px;
             margin: 0;
         }
 
@@ -57,40 +57,28 @@
 
         /* HARD ZONE: The Paper */
         .slide-container {
-            width: 1400px;
-            /* ~85% of width */
-            height: 1800px;
-            /* ~88% of height */
+            width: 940px;
+            height: 940px;
             background: var(--paper-color);
             position: relative;
-            /* Fixed Border Radius */
-            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            border-radius: 180px 12px 160px 12px/12px 160px 12px 180px;
             box-shadow: 4px 8px 25px rgba(0, 0, 0, 0.15);
             transform: rotate(-1deg);
-            /* Subtle tilt */
             overflow: hidden;
-            /* Clip blokken binnen de afgeronde hoeken */
 
             /* ZONES GRID SYSTEM */
             display: grid;
-            padding: 100px 80px;
-            /* Fixed padding */
+            padding: 50px 50px;
             box-sizing: border-box;
 
-            /* Grid Definition: 12 Cols */
             grid-template-columns: repeat(12, 1fr);
-            /* Rows: Header (auto), Content (1fr - fills space), Visual (auto), Footer (fixed) */
             grid-template-rows:
                 min-content
-                /* HeaderZone */
                 1fr
-                /* MainTextZone */
                 min-content
-                /* VisualZone */
-                140px
-                /* FooterZone */
+                80px
             ;
-            gap: 20px;
+            gap: 12px;
         }
 
         /* --- ZONES --- */
@@ -122,23 +110,20 @@
             /* Active templates will override this */
             justify-content: center;
             align-items: center;
-            min-height: 200px;
+            min-height: 100px;
             z-index: 5;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         /* Visual Placeholder Styling (Now supports Image Injection) */
         .visual-placeholder {
             width: 100%;
             height: 100%;
-            min-height: 500px;
-            /* Solid Height for Intro */
+            min-height: 200px;
             background: #e0f7fa;
-            /* Light cyan bg */
             border: none;
-            border-radius: 30px;
+            border-radius: 20px;
             overflow: hidden;
-            /* Crop images */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -149,12 +134,10 @@
         /* Specific Outro Styles */
         .outro-title {
             font-family: var(--font-main);
-            font-size: 100px;
-            /* Same large size for both */
+            font-size: 52px;
             font-weight: 800;
             font-style: italic;
-            color: #00aec7;
-            /* Cyan */
+            color: var(--secondary-color);
             margin: 0;
             text-transform: uppercase;
             line-height: 1.1;
@@ -163,21 +146,17 @@
         }
 
         .outro-spacer {
-            height: 60px;
-            /* The 'wit regel' */
+            height: 30px;
             width: 100%;
         }
 
         .outro-url {
             font-family: var(--font-main);
-            font-size: 35px;
-            /* Much smaller */
+            font-size: 22px;
             font-weight: 900;
-            /* Bold */
-            color: #00aec7;
-            /* Cyan */
+            color: var(--secondary-color);
             text-decoration: none;
-            margin-top: 20px;
+            margin-top: 12px;
             display: block;
             font-style: normal;
         }
@@ -220,8 +199,7 @@
 
         /* Footer Logo Only */
         .footer-logo-img {
-            height: 80px;
-            /* Slightly larger as requested */
+            height: 45px;
             display: block;
         }
 
@@ -236,11 +214,8 @@
 
         .template-a .visual-zone {
             display: flex;
-            /* Activate Visual */
-            min-height: 500px;
-            /* Larger visual for intro */
+            min-height: 200px;
             grid-column: 3 / span 8;
-            /* Centered narrower */
         }
 
         .template-a .header-text {
@@ -279,28 +254,24 @@
         /* --- TYPOGRAPHY --- */
         h1 {
             font-family: var(--font-main);
-            font-size: 90px;
-            line-height: 1.1;
+            font-size: 48px;
+            line-height: 1.15;
             font-weight: 800;
             font-style: italic;
             text-transform: uppercase;
             color: var(--secondary-color);
-            /* Blue 1 */
             margin: 0;
             text-align: center;
             word-break: break-word;
-            /* Prevent overflow */
         }
 
         /* Specific Outro Styles */
         .outro-title {
             font-family: var(--font-main);
-            font-size: 100px;
+            font-size: 52px;
             font-weight: 400;
-            /* Regular/Light? Looks thinner in screenshot? Or just Italic? */
             font-style: italic;
             color: var(--secondary-color);
-            /* Light Blue */
             margin: 0;
             text-transform: uppercase;
             line-height: 1.2;
@@ -308,42 +279,40 @@
 
         .outro-subtitle {
             font-family: var(--font-main);
-            font-size: 90px;
+            font-size: 46px;
             font-weight: 400;
             font-style: italic;
             color: var(--secondary-color);
             margin: 0;
             text-transform: uppercase;
             line-height: 1.2;
-            margin-top: 60px;
-            /* Space from title */
+            margin-top: 30px;
         }
 
         .outro-url {
             font-family: var(--font-main);
-            font-size: 55px;
+            font-size: 28px;
             font-weight: 900;
-            /* Bold */
             color: var(--secondary-color);
             text-decoration: none;
-            margin-top: 20px;
+            margin-top: 12px;
             display: block;
         }
 
         .header-text {
             font-family: var(--font-hand);
-            font-size: 42px;
+            font-size: 24px;
             color: var(--secondary-color);
             font-weight: 700;
             letter-spacing: 1px;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             display: block;
         }
 
         .body-text {
             font-family: var(--font-main);
-            font-size: 60px;
-            line-height: 1.4;
+            font-size: 30px;
+            line-height: 1.45;
             color: var(--primary-color);
             white-space: pre-wrap;
             text-align: center;
@@ -360,25 +329,24 @@
 
         .citation-text {
             font-family: var(--font-hand);
-            font-size: 28px;
+            font-size: 18px;
             color: #94a3b8;
-            /* Slate 400 */
-            max-width: 600px;
+            max-width: 400px;
         }
 
         /* CTA Badge / URL */
         .cta-badge {
             background: var(--accent-color);
             color: white;
-            padding: 15px 35px;
+            padding: 10px 22px;
             font-family: var(--font-hand);
-            font-size: 36px;
+            font-size: 22px;
             border-radius: 50px;
             transform: rotate(-3deg);
-            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.15);
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.15);
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
 
@@ -386,20 +354,16 @@
         /* Positioned Bottom Left-ish */
         .like-comment-container {
             position: absolute;
-            /* Float it */
-            bottom: 160px;
-            /* Align with footer/bottom area */
-            left: 170px;
+            bottom: 90px;
+            left: 100px;
             display: flex;
             align-items: center;
-            gap: 20px;
-            transform: rotate(0deg);
-            /* Straight */
+            gap: 12px;
         }
 
         .like-comment-text {
             font-family: var(--font-hand);
-            font-size: 80px;
+            font-size: 42px;
             font-weight: 700;
             color: #333;
             line-height: 1.1;
@@ -407,10 +371,9 @@
         }
 
         .like-comment-arrow {
-            width: 80px;
-            height: 120px;
-            margin-top: 10px;
-            /* Push arrow down slightly */
+            width: 40px;
+            height: 60px;
+            margin-top: 5px;
         }
 
         .like-comment-arrow path {

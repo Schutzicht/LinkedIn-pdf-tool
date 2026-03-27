@@ -24,9 +24,9 @@ export const BRAND = {
         accent: '"Caveat", cursive',
     },
     layout: {
-        canvasWidth: 1638,
-        canvasHeight: 2048,
-        padding: 100,
+        canvasWidth: 1080,
+        canvasHeight: 1080,
+        padding: 50,
     },
     text: {
         website: 'www.businessverbeteraars.nl',

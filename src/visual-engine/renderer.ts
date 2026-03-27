@@ -55,7 +55,7 @@ export class VisualRenderer {
         }
 
         const page: Page = await this.browser.newPage();
-        await page.setViewport({ width: 1638, height: 2048, deviceScaleFactor: 1 });
+        await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 1 });
         page.on('console', (msg) => logger.debug({ pageLog: msg.text() }, 'PAGE LOG'));
 
         // Bouw alle slide-HTML via de template-modules
@@ -106,8 +106,8 @@ export class VisualRenderer {
         // 2. Multi-page PDF
         await page.pdf({
             path: path.join(outputDir, 'carousel.pdf'),
-            width: '1638px',
-            height: '2048px',
+            width: '1080px',
+            height: '1080px',
             printBackground: true,
             preferCSSPageSize: true,
             margin: { top: '0', right: '0', bottom: '0', left: '0' },

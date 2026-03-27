@@ -1,17 +1,14 @@
 import type { Slide } from '../../types';
-import { getBlokForSlide, wrapWithBlok } from '../blokken';
 import { buildZonesHtml } from './shared';
 import { buildHeaderHtml } from '../../utils/format';
 import { escapeHtml } from '../../utils/sanitize';
 
-export function renderIntroSlide(slide: Slide, slideIndex: number): { html: string; templateClass: string } {
-    const blok = getBlokForSlide('intro', slideIndex);
+export function renderIntroSlide(slide: Slide, _slideIndex: number): { html: string; templateClass: string } {
 
     const headerContent = buildHeaderHtml(slide);
 
-    // Titel gewikkeld in blok als abstracte button-achtergrond
     const titleHtml = slide.content.title
-        ? wrapWithBlok(blok, `<h1>${escapeHtml(slide.content.title)}</h1>`, { opacity: 0.18, padding: 30 })
+        ? `<h1>${escapeHtml(slide.content.title)}</h1>`
         : '';
 
     const mainContent = titleHtml;

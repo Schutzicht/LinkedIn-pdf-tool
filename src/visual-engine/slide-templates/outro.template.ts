@@ -1,18 +1,16 @@
 import type { Slide } from '../../types';
-import { getBlokForSlide, wrapWithBlok } from '../blokken';
 import { buildZonesHtml } from './shared';
 import { BRAND } from '../../config';
 
-export function renderOutroSlide(_slide: Slide, slideIndex: number): { html: string; templateClass: string } {
-    const blok = getBlokForSlide('outro', slideIndex);
+export function renderOutroSlide(_slide: Slide, _slideIndex: number): { html: string; templateClass: string } {
 
-    // Outro titel gewikkeld in blok
-    const mainContent = wrapWithBlok(blok, `
+    // Outro titel
+    const mainContent = `
         <div class="outro-title">DANKJEWEL!</div>
         <div class="outro-spacer"></div>
         <div class="outro-title">MEER VRAGEN?</div>
         <a href="https://${BRAND.text.website}" class="outro-url">${BRAND.text.website}</a>
-    `, { opacity: 0.16, padding: 50 });
+    `;
 
     const visualHtml = `
         <div class="like-comment-container">

@@ -41,6 +41,18 @@ app.use('/api/generate', generateLimiter, generateRoute);
 app.use('/api/render', renderRoute);
 app.use('/api', debugRoute);
 
+// --- Health check (toont of env vars goed staan) ---
+app.get('/api/health', (_req, res) => {
+    const key = CONFIG.ai.apiKey;
+    res.json({
+        status: 'ok',
+        apiKeyPresent: !!key,
+        apiKeyLength: key ? key.length : 0,
+        apiKeyPrefix: key ? key.substring(0, 8) + '...' : 'MISSING',
+        nodeEnv: process.env.NODE_ENV || 'development',
+    });
+});
+
 // --- Cleanup interval (elke 10 min i.p.v. per-request) ---
 const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
 const cleanupTimer = setInterval(() => {

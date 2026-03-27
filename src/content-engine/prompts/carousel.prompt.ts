@@ -2,6 +2,7 @@ import { BRAND } from '../../config';
 
 /**
  * Bouwt de volledige AI prompt voor het genereren van een LinkedIn carousel.
+ * Het aantal slides is dynamisch (4–7) afhankelijk van het onderwerp.
  */
 export function buildCarouselPrompt(topic: string, kennisbank: string): string {
     return `
@@ -23,66 +24,74 @@ export function buildCarouselPrompt(topic: string, kennisbank: string): string {
         - **Formatting**: Use short paragraphs. Use "..." for pauses. Use "Nee: ..." to correct assumptions.
         
         **TOPIC:** "${topic}"
+
+        **SLIDE COUNT RULES:**
+        - Create between 4 and 7 slides total (NEVER more, NEVER less).
+        - The FIRST slide must always be type "intro".
+        - The LAST slide must always be type "outro".
+        - In between, use a MIX of "content" and "engagement" slides.
+        - Simple topics need fewer slides (4-5). Complex or multi-faceted topics need more (6-7).
+        - Each content slide should make ONE clear point. Don't pad with filler.
+        - At least ONE "engagement" slide should appear before the outro.
         
         **REQUIRED STRUCTURE (JSON ONLY):**
+        Return ONLY valid JSON. Decide the number of slides based on the topic complexity.
+        Each slide must have a sequential "id" field: "slide-1", "slide-2", etc.
+
+        Slide type schemas:
+        
+        INTRO slide (always first):
         {
-            "title": "Internal Title for tracking",
+            "type": "intro",
+            "id": "slide-1",
+            "content": {
+                "subtitle": "Short subtitle like '~~~ DE VRAAG ~~~'",
+                "title": "A provocative hook/question (Short & Punchy, max 8 words)",
+                "cta": "Swipe voor het antwoord"
+            },
+            "visuals": { "style": "cover" }
+        }
+
+        CONTENT slide:
+        {
+            "type": "content",
+            "id": "slide-N",
+            "content": {
+                "title": "Short bold statement (optional, max 5 words)",
+                "body": "The main text. Keep it concise, max 3 short paragraphs.",
+                "footer": "Source or brand name"
+            }
+        }
+
+        ENGAGEMENT slide (at least 1, before outro):
+        {
+            "type": "engagement",
+            "id": "slide-N",
+            "content": {
+                "title": "Reflective question header (optional)",
+                "body": "A question to the reader that provokes thought",
+                "cta": "Like & comment"
+            }
+        }
+
+        OUTRO slide (always last):
+        {
+            "type": "outro",
+            "id": "slide-N",
+            "content": {
+                "title": "DANKJEWEL!",
+                "subtitle": "MEER VRAGEN?",
+                "body": "${BRAND.text.website}",
+                "cta": "Connect"
+            }
+        }
+
+        Wrap all slides in this structure:
+        {
+            "title": "Internal tracking title",
             "topic": "${topic}",
-            "postBody": "WRITE THE LINKEDIN POST HERE. Start with a hook. Use the tone described above. Include 3-5 relevant hashtags at the end (e.g. #businessverbeteraars #ondernemen).",
-            "slides": [
-                {
-                    "type": "intro",
-                    "id": "slide-1",
-                    "content": {
-                        "subtitle": "~~~ DE VRAAG VAN VANDAAG ~~~",
-                        "title": "A provocative hook/question about the topic (Short & Punchy). E.g. 'Zijn ondernemers groeiweigeraars?'",
-                        "cta": "Swipe voor het antwoord"
-                    },
-                    "visuals": { "style": "cover" }
-                },
-                {
-                    "type": "content",
-                    "id": "slide-2",
-                    "content": {
-                        "body": "State the standard belief: 'Onderzoekers zeggen...'. Use data if relevant.",
-                        "footer": "Herkenbaar?"
-                    }
-                },
-                {
-                    "type": "content",
-                    "id": "slide-3",
-                    "content": {
-                        "body": "The Twist: 'En dat is foute boel, toch?' or 'Is dat wel zo?'. Introduces the conflict.",
-                        "footer": "Business Verbeteraars"
-                    }
-                },
-                {
-                    "type": "content",
-                    "id": "slide-4",
-                    "content": {
-                        "body": "The Insight. Use playful words like 'stilstandliefhebbers' or 'durfvermijders' if it fits.",
-                        "footer": "Business Verbeteraars"
-                    }
-                },
-                {
-                    "type": "engagement",
-                    "id": "slide-5",
-                    "content": {
-                        "body": "The Question to the reader: 'Wat is jouw antwoord op de vraag: ...?'",
-                        "cta": "Like & comment"
-                    }
-                },
-                {
-                    "type": "outro",
-                    "id": "slide-6",
-                    "content": {
-                        "title": "DANKJEWEL!",
-                        "subtitle": "MEER VRAGEN?",
-                        "body": "${BRAND.text.website}",
-                        "cta": "Connect"
-                    }
-                }
-            ],
+            "postBody": "LINKEDIN POST TEXT. Start with a hook. Use Jeroen's tone. End with 3-5 hashtags (e.g. #businessverbeteraars #ondernemen).",
+            "slides": [ ... all slides here ... ],
             "metadata": {
                 "author": "Jeroen",
                 "date": "${new Date().toISOString()}"

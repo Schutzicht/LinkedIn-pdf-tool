@@ -76,12 +76,15 @@ export class VisualRenderer {
                 `;
             }
 
-            // Laad template en injecteer slides
-            await page.setContent(this.templateHtml, { waitUntil: 'domcontentloaded' });
+            // Laad template en wacht tot netwerk idle is (fonts, CSS)
+            await page.setContent(this.templateHtml, { waitUntil: 'networkidle0' });
             await page.evaluate((html: string) => {
                 const container = document.getElementById('carousel-root');
                 if (container) container.innerHTML = html;
             }, combinedHtml);
+
+            // Wacht tot alle fonts geladen zijn (Google Fonts async)
+            await page.evaluate(() => document.fonts.ready);
 
             // Wacht op afbeeldingen
             await page.evaluate(async () => {

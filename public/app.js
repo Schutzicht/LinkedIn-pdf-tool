@@ -157,7 +157,7 @@ function updateSlideData(index, field, value) {
 async function updateVisuals() {
     if (!currentCarouselData) return;
 
-    const btn = document.querySelector('#editorSection button');
+    const btn = document.getElementById('updateVisualsBtn');
     const originalText = btn.innerHTML;
     btn.innerHTML = 'Rendering...';
     btn.disabled = true;

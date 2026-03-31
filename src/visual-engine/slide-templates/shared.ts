@@ -2,6 +2,7 @@
  * Gedeelde layout builder voor alle slide templates.
  * Definieert de vaste zone-structuur die elke slide gebruikt.
  */
+import { getLogoDataUri } from '../../utils/logo';
 
 export interface ZoneParts {
     headerContent: string;
@@ -21,16 +22,9 @@ export function buildZonesHtml(parts: ZoneParts): string {
             <div class="footer-left-content">${parts.footerLeft}</div>
             <div class="footer-right-content">
                 <div class="footer-branding">
-                    <img src="${getLogoUrl()}" alt="Logo" class="footer-logo-img">
+                    <img src="${getLogoDataUri()}" alt="Logo" class="footer-logo-img">
                 </div>
             </div>
         </div>
     `;
-}
-
-/** Centraliseert de logo URL — importeert BRAND lazy om circulaire deps te voorkomen */
-function getLogoUrl(): string {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { BRAND } = require('../../config');
-    return BRAND.images.logo as string;
 }

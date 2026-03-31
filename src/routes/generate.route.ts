@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { randomUUID } from 'crypto';
 import * as path from 'path';
 import { contentProcessor, renderer } from '../services';
 import { validateGenerate } from '../middleware/validate';
@@ -15,7 +16,7 @@ router.post('/', validateGenerate, async (req: Request, res: Response) => {
 
         const carouselData = await contentProcessor.generateCarousel(topic);
 
-        const outputDir = path.join(CONFIG.paths.output, `session-${Date.now()}`);
+        const outputDir = path.join(CONFIG.paths.output, `session-${randomUUID()}`);
         await renderer.renderCarousel(carouselData, outputDir);
 
         const relativePath = path.relative(CONFIG.paths.output, outputDir);

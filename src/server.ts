@@ -21,7 +21,12 @@ app.set('trust proxy', 1);
 app.use(helmet({
     contentSecurityPolicy: false, // Puppeteer-generated content needs inline styles
 }));
-app.use(cors());
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    : ['http://localhost:3000'];
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production' ? allowedOrigins : '*',
+}));
 
 // --- Rate Limiting ---
 const generateLimiter = rateLimit({
@@ -48,12 +53,16 @@ app.use('/api', debugRoute);
 // --- Health check (toont of env vars goed staan) ---
 app.get('/api/health', (_req, res) => {
     const key = CONFIG.ai.apiKey;
+    const isDev = process.env.NODE_ENV !== 'production';
     res.json({
         status: 'ok',
-        apiKeyPresent: !!key,
-        apiKeyLength: key ? key.length : 0,
-        apiKeyPrefix: key ? key.substring(0, 8) + '...' : 'MISSING',
         nodeEnv: process.env.NODE_ENV || 'development',
+        // API key details alleen zichtbaar in development
+        ...(isDev && {
+            apiKeyPresent: !!key,
+            apiKeyLength: key ? key.length : 0,
+            apiKeyPrefix: key ? key.substring(0, 8) + '...' : 'MISSING',
+        }),
     });
 });
 

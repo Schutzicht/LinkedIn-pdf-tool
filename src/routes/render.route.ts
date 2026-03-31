@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { randomUUID } from 'crypto';
 import * as path from 'path';
 import { renderer } from '../services';
 import { validateRender } from '../middleware/validate';
@@ -13,7 +14,7 @@ router.post('/', validateRender, async (req: Request, res: Response) => {
         const { slides } = req.body as { slides: Slide[] };
         logger.info({ slideCount: slides.length }, 'Render request ontvangen');
 
-        const outputDir = path.join(CONFIG.paths.output, `session-${Date.now()}`);
+        const outputDir = path.join(CONFIG.paths.output, `session-${randomUUID()}`);
         await renderer.renderCarousel({ slides }, outputDir);
 
         const relativePath = path.relative(CONFIG.paths.output, outputDir);

@@ -20,8 +20,14 @@ export function renderIntroSlide(slide: Slide, _slideIndex: number): { html: str
             </svg>
         </div>`;
 
-    const footerLeft = `<div class="citation-text">Swipe voor meer 👉</div>`;
-    const ctaHtml = `<div class="cta-badge">Swipe 👉</div>`;
+    const footerLeft = '';
+    const ctaHtml = `
+        <div class="cta-badge">
+            <svg class="cta-badge-arrow" viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg" style="width:50px;height:28px;transform:rotate(-5deg);">
+                <path d="M 10 25 L 90 25 M 70 10 L 90 25 L 70 40" />
+            </svg>
+            <div class="cta-badge-text">Swipe</div>
+        </div>`;
 
     const html = buildZonesHtml({ headerContent, mainContent, visualHtml, footerLeft, ctaHtml });
     return { html, templateClass: 'template-a' };

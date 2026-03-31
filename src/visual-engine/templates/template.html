@@ -162,16 +162,14 @@
         }
 
 
-        /* CTA Zone - Absolute to float over/near logic without breaking flow, but strictly positioned */
+        /* CTA Zone - Rechts midden, in de padding buiten de content grid */
         .cta-zone {
             position: absolute;
             z-index: 30;
-            /* Highest priority */
-            bottom: 240px;
-            /* Just above footer */
-            right: 60px;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
             pointer-events: none;
-            /* Just visual */
         }
 
         /* Footer Zone - Grid Based */
@@ -339,18 +337,34 @@
         }
 
         /* CTA Badge / URL */
+        /* CTA Badge — verticaal: pijl boven wijzend naar beneden, tekst eronder */
         .cta-badge {
-            background: var(--accent-color);
-            color: white;
-            padding: 10px 22px;
-            font-family: var(--font-hand);
-            font-size: 22px;
-            border-radius: 50px;
-            transform: rotate(-3deg);
-            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.15);
-            display: inline-flex;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
+        }
+
+        .cta-badge-arrow {
+            width: 30px;
+            height: 50px;
+        }
+
+        .cta-badge-arrow path {
+            fill: none;
+            stroke: #333;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .cta-badge-text {
+            font-family: var(--font-hand);
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            line-height: 1;
+            text-align: center;
         }
 
 

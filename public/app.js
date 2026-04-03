@@ -1,13 +1,12 @@
 /**
  * LinkedIn Carousel Tool — Frontend Logic
- * Extracted from inline script for better maintainability.
+ * Connects AI generation to the interactive canvas editor.
  */
 
 let currentCarouselData = null;
 
-// --- Toast Notifications (vervangt alert()) ---
+// --- Toast Notifications ---
 function showToast(message, type = 'success') {
-    // Verwijder bestaande toast
     const existing = document.querySelector('.toast');
     if (existing) existing.remove();
 
@@ -34,19 +33,23 @@ async function generateCarousel() {
 
     const btn = document.getElementById('generateBtn');
     const loading = document.getElementById('loading');
-    const preview = document.getElementById('previewSection');
     const emptyState = document.getElementById('emptyState');
-    const grid = document.getElementById('grid');
-    const editor = document.getElementById('editorSection');
+    const canvasSection = document.getElementById('canvasEditorSection');
+    const editorSection = document.getElementById('editorSection');
+    const postSection = document.getElementById('postSection');
 
-    // UI Updates
+    // UI: show canvas with skeleton immediately (no overlay)
     btn.disabled = true;
     btn.classList.add('opacity-50', 'cursor-not-allowed');
-    loading.classList.remove('hidden');
     emptyState.classList.add('hidden');
-    preview.classList.add('hidden');
-    editor.classList.add('hidden');
-    grid.innerHTML = '';
+    loading.classList.add('hidden');
+    canvasSection.classList.remove('hidden');
+    editorSection.classList.add('hidden');
+    postSection.classList.add('hidden');
+
+    // Show skeleton preview while AI generates
+    if (!editor) initCanvasEditor();
+    await editor.showSkeleton(5);
 
     try {
         const response = await fetch('/api/generate', {
@@ -58,25 +61,34 @@ async function generateCarousel() {
         const result = await response.json();
 
         if (!response.ok) {
-            // Rate limiting of server error
             throw new Error(result.error || `Server fout (${response.status})`);
         }
 
         if (result.success) {
             currentCarouselData = result.data;
-            loading.classList.add('hidden');
-            preview.classList.remove('hidden');
-            editor.classList.remove('hidden');
 
+            // Replace skeleton with real slide data
+            await editor.loadSlides(result.data);
+
+            // Show UI sections
+            loading.classList.add('hidden');
+            canvasSection.classList.remove('hidden');
+            editorSection.classList.remove('hidden');
+            postSection.classList.remove('hidden');
+
+            // Post body
             document.getElementById('postBodyOutput').value = result.data.postBody || 'Geen tekst gegenereerd.';
+
+            // Build text editor
             renderEditor(result.data.slides);
-            updatePreviewUI(result);
+
+            showToast('Carousel gegenereerd!');
         } else {
             throw new Error(result.error || 'Onbekende API fout');
         }
     } catch (error) {
         console.error(error);
-        loading.classList.add('hidden');
+        canvasSection.classList.add('hidden');
         emptyState.classList.remove('hidden');
         showToast(error.message || 'Fout bij het genereren', 'error');
     } finally {
@@ -85,56 +97,55 @@ async function generateCarousel() {
     }
 }
 
-// --- Editor ---
+// --- Text Editor (sidebar) ---
 function renderEditor(slides) {
     const container = document.getElementById('slidesEditor');
     container.innerHTML = '';
 
     slides.forEach((slide, index) => {
         const div = document.createElement('div');
-        div.className = 'p-4 border border-slate-100 rounded-lg bg-slate-50 space-y-3';
+        div.className = 'p-3 border border-slate-100 rounded-lg bg-slate-50 space-y-2';
         div.innerHTML = `
-            <div class="font-bold text-sm text-slate-400 uppercase">Slide ${index + 1} (${slide.type})</div>
-            
+            <div class="font-bold text-xs text-slate-400 uppercase">Slide ${index + 1} (${slide.type})</div>
+
             ${slide.content.subtitle !== undefined ? `
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Header / Subtitle</label>
-                    <input type="text" class="w-full p-2 rounded border border-slate-200 text-sm" value="${escapeAttr(slide.content.subtitle || '')}" data-index="${index}" data-field="subtitle">
+                    <label class="block text-xs font-bold text-slate-500 mb-0.5">Header</label>
+                    <input type="text" class="w-full p-1.5 rounded border border-slate-200 text-xs" value="${escapeAttr(slide.content.subtitle || '')}" data-index="${index}" data-field="subtitle">
                 </div>
             ` : ''}
 
             ${slide.content.title !== undefined ? `
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Titel</label>
-                    <input type="text" class="w-full p-2 rounded border border-slate-200 text-sm font-bold" value="${escapeAttr(slide.content.title || '')}" data-index="${index}" data-field="title">
+                    <label class="block text-xs font-bold text-slate-500 mb-0.5">Titel</label>
+                    <input type="text" class="w-full p-1.5 rounded border border-slate-200 text-xs font-bold" value="${escapeAttr(slide.content.title || '')}" data-index="${index}" data-field="title">
                 </div>
             ` : ''}
 
             ${slide.content.body !== undefined ? `
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Body Tekst</label>
-                    <textarea class="w-full p-2 rounded border border-slate-200 text-sm h-24 resize-none" data-index="${index}" data-field="body">${escapeAttr(slide.content.body || '')}</textarea>
+                    <label class="block text-xs font-bold text-slate-500 mb-0.5">Body</label>
+                    <textarea class="w-full p-1.5 rounded border border-slate-200 text-xs h-16 resize-none" data-index="${index}" data-field="body">${escapeAttr(slide.content.body || '')}</textarea>
                 </div>
             ` : ''}
-            
+
             ${slide.content.footer !== undefined ? `
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Footer / Bron</label>
-                    <input type="text" class="w-full p-2 rounded border border-slate-200 text-sm" value="${escapeAttr(slide.content.footer || '')}" data-index="${index}" data-field="footer">
+                    <label class="block text-xs font-bold text-slate-500 mb-0.5">Footer / Bron</label>
+                    <input type="text" class="w-full p-1.5 rounded border border-slate-200 text-xs" value="${escapeAttr(slide.content.footer || '')}" data-index="${index}" data-field="footer">
                 </div>
             ` : ''}
         `;
         container.appendChild(div);
     });
 
-    // Event delegation voor alle editor inputs
-    container.addEventListener('change', (e) => {
+    // Live update slide data on input change
+    container.addEventListener('input', (e) => {
         const target = e.target;
         if (target.dataset && target.dataset.index !== undefined && target.dataset.field) {
             const index = parseInt(target.dataset.index, 10);
             const field = target.dataset.field;
-            const value = target.value;
-            updateSlideData(index, field, value);
+            updateSlideData(index, field, target.value);
         }
     });
 }
@@ -153,69 +164,40 @@ function updateSlideData(index, field, value) {
     }
 }
 
-// --- Update Visuals ---
-async function updateVisuals() {
-    if (!currentCarouselData) return;
+// --- Apply text edits to canvas ---
+async function applyTextEdits() {
+    if (!currentCarouselData || !editor) return;
 
-    const btn = document.getElementById('updateVisualsBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = 'Rendering...';
+    const btn = document.getElementById('applyEditsBtn');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = 'Laden...';
     btn.disabled = true;
 
     try {
-        const response = await fetch('/api/render', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ slides: currentCarouselData.slides }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            updatePreviewUI(result);
-            showToast('Visuals bijgewerkt!');
-        } else {
-            showToast('Fout bij updaten: ' + result.error, 'error');
-        }
+        // Reload slides with updated data
+        await editor.loadSlides(currentCarouselData);
+        showToast('Canvas bijgewerkt!');
     } catch (e) {
         console.error(e);
-        showToast('Verbindingsfout', 'error');
+        showToast('Fout bij bijwerken', 'error');
     } finally {
-        btn.innerHTML = originalText;
+        btn.innerHTML = originalHtml;
         btn.disabled = false;
     }
 }
 
-// --- Preview UI ---
-function updatePreviewUI(result) {
-    const pdfBtn = document.getElementById('downloadPdfBtn');
-    const grid = document.getElementById('grid');
+// --- Export PDF ---
+async function exportPDF() {
+    if (!editor) return;
 
-    if (result.pdfUrl) {
-        pdfBtn.href = result.pdfUrl;
-        pdfBtn.classList.remove('hidden');
-    } else {
-        pdfBtn.classList.add('hidden');
+    showToast('PDF wordt gegenereerd...');
+    try {
+        await editor.exportPDF();
+        showToast('PDF gedownload!');
+    } catch (e) {
+        console.error(e);
+        showToast('Fout bij PDF export', 'error');
     }
-
-    grid.innerHTML = '';
-    result.images.forEach((imgUrl, index) => {
-        const card = document.createElement('div');
-        card.className = 'group relative rounded-xl overflow-hidden shadow-lg transition-transform hover:scale-[1.02] duration-300 bg-white';
-
-        const img = document.createElement('img');
-        img.src = `${imgUrl}?t=${Date.now()}`;
-        img.alt = `Slide ${index + 1}`;
-        img.className = 'w-full h-auto block';
-
-        const overlay = document.createElement('div');
-        overlay.className = 'absolute inset-0 bg-primary/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center';
-        overlay.innerHTML = `<a href="${imgUrl}" download="slide-${index + 1}.png" class="bg-white text-primary font-bold py-2 px-6 rounded-full hover:bg-accent hover:text-white transition-colors">Download</a>`;
-
-        card.appendChild(img);
-        card.appendChild(overlay);
-        grid.appendChild(card);
-    });
 }
 
 // --- Copy Post Text ---
@@ -223,11 +205,10 @@ async function copyPostText() {
     const textarea = document.getElementById('postBodyOutput');
     try {
         await navigator.clipboard.writeText(textarea.value);
-        showToast('Tekst gekopieerd! 📋');
+        showToast('Tekst gekopieerd!');
     } catch {
-        // Fallback voor oudere browsers
         textarea.select();
         document.execCommand('copy');
-        showToast('Tekst gekopieerd! 📋');
+        showToast('Tekst gekopieerd!');
     }
 }

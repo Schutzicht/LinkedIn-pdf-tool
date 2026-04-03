@@ -9,7 +9,7 @@
     --font-sans: 'Montserrat', sans-serif;
 }
 
-/* ==== Custom Styles ==== */
+/* ==== Base Styles ==== */
 
 body {
     font-family: 'Montserrat', sans-serif;
@@ -22,6 +22,8 @@ body {
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
+
+/* ==== Loading Spinner ==== */
 
 .loader {
     border: 4px solid #f3f3f3;
@@ -37,7 +39,8 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Toast notificatie */
+/* ==== Toast Notifications ==== */
+
 .toast {
     position: fixed;
     bottom: 24px;
@@ -66,4 +69,163 @@ body {
 .toast.error {
     background: #ef4444;
     color: white;
+}
+
+/* ==== Canvas Editor ==== */
+
+#canvasWrapper {
+    position: relative;
+    overflow: hidden;
+    background: #e2e8f0;
+    border: 2px solid #cbd5e1;
+}
+
+#canvasScaleContainer {
+    transform-origin: top left;
+}
+
+/* Fabric.js canvas overrides */
+.canvas-container {
+    margin: 0 !important;
+}
+
+/* ==== Slide Tabs ==== */
+
+.slide-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+}
+
+.slide-tab:hover {
+    border-color: #00aec7;
+    background: #f0fdff;
+}
+
+.slide-tab.active {
+    border-color: #00aec7;
+    background: #00aec7;
+    color: white;
+}
+
+.slide-tab-num {
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.slide-tab-type {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+}
+
+.slide-tab.active .slide-tab-type {
+    opacity: 1;
+}
+
+/* ==== Layer Panel ==== */
+
+.layer-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 12px;
+    border: 1px solid transparent;
+}
+
+.layer-item:hover {
+    background: #f1f5f9;
+}
+
+.layer-item.active {
+    background: #e0f7ff;
+    border-color: #00aec7;
+}
+
+.layer-item.locked {
+    opacity: 0.5;
+}
+
+.layer-name {
+    flex: 1;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #334155;
+}
+
+.layer-item.active .layer-name {
+    color: #0081C6;
+    font-weight: 700;
+}
+
+.layer-visibility,
+.layer-lock {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px;
+    border-radius: 4px;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.layer-visibility:hover,
+.layer-lock:hover {
+    opacity: 1;
+    background: #e2e8f0;
+}
+
+/* ==== Scrollbar Styling ==== */
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+#layerPanel::-webkit-scrollbar {
+    width: 4px;
+}
+
+#layerPanel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#layerPanel::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+#slidesEditor::-webkit-scrollbar {
+    width: 4px;
+}
+
+#slidesEditor::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#slidesEditor::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
 }

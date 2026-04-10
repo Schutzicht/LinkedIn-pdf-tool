@@ -12,11 +12,18 @@ export interface Slide {
         footer?: string; // e.g. "Bron: ..."
         cta?: string; // "Klik hier" or "Like & comment"
         imageKeyword?: string;
+        blokken?: string[]; // e.g. ["Sterktes", "Zwaktes", "Kansen", "Bedreigingen"]
     };
     visuals?: {
         icon?: string; // Icon name e.g. "growth-ban"
         backgroundImage?: string;
+        style?: string;
+        layout?: string; // Intro layout: grid, hero, sidebar, diagonal, bottom-row, pyramid, scattered, stack
     };
+    decorations?: Array<{
+        type: string;
+        [key: string]: any;
+    }>;
 }
 
 export interface CarouselData {

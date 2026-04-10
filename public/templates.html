@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Templates Preview | Business Verbeteraars</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/favicon-blauw.svg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #111;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top bar */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: #16213e;
+            border-bottom: 1px solid #0f3460;
+            flex-shrink: 0;
+        }
+        .top-bar h1 { font-size: 16px; font-weight: 700; color: #A8D4E6; letter-spacing: 1px; }
+        .preset-counter { font-size: 12px; color: #94a3b8; }
+        .actions { display: flex; gap: 10px; align-items: center; }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-blue { background: #0081C6; color: #fff; }
+        .btn-blue:hover { background: #006da8; }
+        .btn-grey { background: #3D2E32; color: #ccc; }
+        .btn-grey:hover { background: #56565A; }
+
+        /* Main */
+        .main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: #16213e;
+            border-right: 1px solid #0f3460;
+            overflow-y: auto;
+            padding: 12px;
+        }
+        .sidebar-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 8px 12px;
+            margin-top: 8px;
+        }
+        .preset-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #cbd5e1;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            margin-bottom: 2px;
+            transition: all 0.12s;
+        }
+        .preset-btn:hover { background: rgba(255,255,255,0.04); }
+        .preset-btn.active {
+            background: rgba(0,129,198,0.15);
+            color: #A8D4E6;
+            font-weight: 700;
+        }
+        .preset-btn-name { display: block; }
+        .preset-btn-meta { display: block; font-size: 10px; color: #64748b; margin-top: 2px; }
+
+        /* Canvas area */
+        .canvas-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .slide-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .slide-tab {
+            padding: 6px 14px;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #94a3b8;
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .slide-tab:hover { border-color: #0081C6; }
+        .slide-tab.active { border-color: #0081C6; background: #0081C6; color: #fff; }
+
+        #canvasWrapper {
+            background: #1a1a1a;
+            border-radius: 12px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        #canvasScaleContainer { transform-origin: top left; }
+
+        /* Info panel */
+        .info-panel {
+            background: #16213e;
+            border-left: 1px solid #0f3460;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .info-section { margin-bottom: 18px; }
+        .info-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+        }
+        .info-value {
+            font-size: 14px;
+            color: #A8D4E6;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+        .info-text {
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+        .info-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            background: rgba(0,129,198,0.15);
+            color: #A8D4E6;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .info-pill.orange {
+            background: rgba(243,107,0,0.15);
+            color: #f9b380;
+        }
+        .info-pill.green {
+            background: rgba(34,197,94,0.15);
+            color: #6ee7b7;
+        }
+        .info-list {
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.7;
+            padding-left: 16px;
+            margin-top: 4px;
+        }
+        .slide-list-item {
+            padding: 6px 8px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            margin-bottom: 3px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            color: #cbd5e1;
+        }
+        .slide-list-item .type {
+            color: #A8D4E6;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .main { grid-template-columns: 1fr; grid-template-rows: auto auto auto; overflow-y: auto; }
+            .sidebar { max-height: 200px; }
+            .info-panel { max-height: 250px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <h1>TEMPLATES PREVIEW</h1>
+        <span class="preset-counter" id="presetCounter">— / —</span>
+    </div>
+    <div class="actions">
+        <button class="btn btn-grey" onclick="prevPreset()">← Vorige</button>
+        <button class="btn btn-blue" onclick="nextPreset()">Volgende →</button>
+        <button class="btn btn-blue" onclick="exportCurrentSlide()" title="Kopieer huidige slide posities">📋 Export Slide</button>
+        <button class="btn btn-blue" onclick="exportFullTemplate()" title="Kopieer alle slides van dit template">📋 Export Template</button>
+        <button class="btn btn-grey" onclick="window.location='/'">Hoofdpagina</button>
+    </div>
+</div>
+
+<!-- Toast voor feedback -->
+<div id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0081C6;color:#fff;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:transform 0.3s;z-index:999;"></div>
+
+<div class="main">
+    <!-- Sidebar: list all presets -->
+    <aside class="sidebar">
+        <div class="sidebar-title">Alle Templates</div>
+        <div id="presetList"></div>
+    </aside>
+
+    <!-- Canvas -->
+    <div class="canvas-area">
+        <div class="slide-tabs" id="slideTabs"></div>
+        <div id="canvasWrapper">
+            <div id="canvasScaleContainer">
+                <canvas id="slideCanvas" width="1080" height="1080"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info panel -->
+    <aside class="info-panel">
+        <div class="info-section">
+            <div class="info-label">Template</div>
+            <div class="info-value" id="presetName">—</div>
+        </div>
+        <div class="info-section">
+            <div class="info-label">Gebruik wanneer</div>
+            <div class="info-text" id="presetUseWhen">—</div>
+        </div>
+        <div class="info-section">
+            <div class="info-label">Niet gebruiken bij</div>
+            <div class="info-text" id="presetDontUseWhen">—</div>
+        </div>
+        <div class="info-section">
+            <div class="info-label">Voorbeeld onderwerpen</div>
+            <ul class="info-list" id="presetExamples"></ul>
+        </div>
+        <div class="info-section">
+            <div class="info-label">Slide structuur</div>
+            <div id="presetSlideList"></div>
+        </div>
+        <div class="info-section">
+            <div class="info-label">Layouts gebruikt</div>
+            <div id="presetLayouts"></div>
+        </div>
+        <div class="info-section">
+            <div class="info-label">Decoraties</div>
+            <div id="presetDecorations"></div>
+        </div>
+    </aside>
+</div>
+
+<script src="/canvas-editor.js"></script>
+<script>
+    // ── Dummy content per field type ──
+    const DUMMY = {
+        subtitle: '~~~ HET ONDERWERP ~~~',
+        title_intro: 'Een prikkelende vraag of stelling?',
+        title_content: 'Krachtige conclusie',
+        title_engagement: 'En jij?',
+        body_long: 'Dit is een voorbeeldtekst die aangeeft hoe een lange body op een content slide eruit ziet. Het bevat meerdere zinnen die de diepte ingaan.\n\nNee: het is geen oppervlakkige samenvatting. Een echte content slide vraagt om reflectie en concrete voorbeelden uit de praktijk.',
+        body_medium: 'Wat denk jij hiervan? Herken je dit zelf? Deel het in de reacties.',
+        blokken_3: ['Visie', 'Plan', 'Actie'],
+        blokken_4: ['Eerst', 'Dan', 'Daarna', 'Tenslotte'],
+        blokken_5: ['Start', 'Bouw', 'Groei', 'Bloei', 'Oogst'],
+        blokken_3_lessons: ['Les 1', 'Les 2', 'Les 3'],
+        blokken_5_lessons: ['Les 1', 'Les 2', 'Les 3', 'Les 4', 'Les 5'],
+        blokken_3_myths: ['Mythe 1', 'Mythe 2', 'Mythe 3'],
+        blokken_3_steps: ['Stap 1', 'Stap 2', 'Stap 3'],
+        blokken_4_steps: ['Stap 1', 'Stap 2', 'Stap 3', 'Stap 4'],
+        blokken_5_steps: ['Stap 1', 'Stap 2', 'Stap 3', 'Stap 4', 'Stap 5'],
+        blokken_2_contrast: ['Voor?', 'Na?'],
+    };
+
+    let allPresets = [];
+    let currentIdx = 0;
+    let templateEditor = null;
+
+    async function init() {
+        // Load presets from API
+        try {
+            const res = await fetch('/api/presets');
+            const data = await res.json();
+            allPresets = data.presets || [];
+        } catch (e) {
+            console.error('Kon presets niet laden:', e);
+            return;
+        }
+
+        // Init canvas editor
+        templateEditor = new SlideCanvasEditor('slideCanvas', null, null);
+        templateEditor._updateCanvasScale = function() {
+            const wrapper = document.getElementById('canvasWrapper');
+            if (!wrapper) return;
+            const area = wrapper.parentElement;
+            const availH = area.clientHeight - 100;
+            const availW = area.clientWidth - 40;
+            const scale = Math.min(availW / 1080, availH / 1080, 1);
+            const c = document.getElementById('canvasScaleContainer');
+            if (c) {
+                c.style.transform = `scale(${scale})`;
+                c.style.width = '1080px';
+                c.style.height = '1080px';
+            }
+            wrapper.style.width = Math.round(1080 * scale) + 'px';
+            wrapper.style.height = Math.round(1080 * scale) + 'px';
+        };
+
+        renderPresetList();
+        await loadPreset(0);
+        window.addEventListener('resize', () => templateEditor._updateCanvasScale());
+
+        // Keyboard nav
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') prevPreset();
+            else if (e.key === 'ArrowRight') nextPreset();
+        });
+    }
+
+    function renderPresetList() {
+        const list = document.getElementById('presetList');
+        list.innerHTML = allPresets.map((p, i) => {
+            const slideCount = p.slides.length;
+            const introLayout = (p.slides[0] && p.slides[0].layout) || 'grid';
+            return `<button class="preset-btn ${i === currentIdx ? 'active' : ''}" data-idx="${i}" onclick="loadPreset(${i})">
+                <span class="preset-btn-name">${i + 1}. ${p.name}</span>
+                <span class="preset-btn-meta">${slideCount} slides · ${introLayout}</span>
+            </button>`;
+        }).join('');
+    }
+
+    async function loadPreset(idx) {
+        if (idx < 0 || idx >= allPresets.length) return;
+        currentIdx = idx;
+        const preset = allPresets[idx];
+
+        // Build dummy carousel data from preset
+        const carouselData = buildDummyCarousel(preset);
+
+        await templateEditor.loadSlides(carouselData);
+        templateEditor._updateCanvasScale();
+
+        renderPresetList();
+        renderSlideTabs(carouselData.slides);
+        renderInfoPanel(preset);
+        updateCounter();
+    }
+
+    function buildDummyCarousel(preset) {
+        const slides = preset.slides.map((presetSlide, i) => {
+            const slide = {
+                type: presetSlide.type,
+                id: `slide-${i + 1}`,
+                content: {},
+            };
+
+            if (presetSlide.layout) {
+                slide.visuals = { layout: presetSlide.layout, style: 'cover' };
+            }
+
+            // Pass through decorations from preset
+            if (presetSlide.decorations) {
+                slide.decorations = presetSlide.decorations;
+            }
+
+            if (presetSlide.type === 'outro') {
+                slide.content = {
+                    title: 'DANKJEWEL!',
+                    subtitle: 'MEER VRAGEN?',
+                    body: 'businessverbeteraars.nl',
+                    cta: 'Connect',
+                };
+                return slide;
+            }
+
+            if (presetSlide.content) {
+                for (const [key, value] of Object.entries(presetSlide.content)) {
+                    if (typeof value === 'string') {
+                        slide.content[key] = resolveDummy(key, value, presetSlide.type);
+                    }
+                }
+            }
+
+            return slide;
+        });
+
+        return {
+            title: preset.name,
+            topic: preset.examples[0] || preset.name,
+            postBody: '',
+            slides,
+            metadata: { author: 'Preview', date: new Date().toISOString(), presetId: preset.id },
+        };
+    }
+
+    function resolveDummy(key, value, slideType) {
+        if (value === 'fixed-swot') return ['Sterktes', 'Zwaktes', 'Kansen', 'Bedreigingen'];
+        if (value === 'fixed-voor-na') return ['Voor', 'Na'];
+        if (value.startsWith('fixed-')) return value.replace('fixed-', '');
+
+        if (!value.startsWith('ai')) return value; // literal preset string
+
+        // Map ai field types to dummy content
+        if (key === 'subtitle') return DUMMY.subtitle;
+        if (key === 'title') {
+            if (slideType === 'intro') return DUMMY.title_intro;
+            if (slideType === 'engagement') return DUMMY.title_engagement;
+            return DUMMY.title_content;
+        }
+        if (key === 'body') {
+            return value === 'ai-medium' ? DUMMY.body_medium : DUMMY.body_long;
+        }
+        if (key === 'blokken') {
+            const map = {
+                'ai-3': DUMMY.blokken_3,
+                'ai-4': DUMMY.blokken_4,
+                'ai-5': DUMMY.blokken_5,
+                'ai-3-lessons': DUMMY.blokken_3_lessons,
+                'ai-5-lessons': DUMMY.blokken_5_lessons,
+                'ai-3-myths': DUMMY.blokken_3_myths,
+                'ai-3-steps': DUMMY.blokken_3_steps,
+                'ai-4-steps': DUMMY.blokken_4_steps,
+                'ai-5-steps': DUMMY.blokken_5_steps,
+                'ai-2-contrast': DUMMY.blokken_2_contrast,
+            };
+            return map[value] || DUMMY.blokken_3;
+        }
+        return '...';
+    }
+
+    function renderSlideTabs(slides) {
+        const tabs = document.getElementById('slideTabs');
+        tabs.innerHTML = slides.map((s, i) => {
+            const label = s.type.charAt(0).toUpperCase() + s.type.slice(1);
+            return `<button class="slide-tab ${i === 0 ? 'active' : ''}" onclick="switchSlide(${i}, this)">${i + 1}. ${label}</button>`;
+        }).join('');
+    }
+
+    function switchSlide(idx, btn) {
+        document.querySelectorAll('.slide-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        templateEditor.switchToSlide(idx);
+    }
+
+    function renderInfoPanel(preset) {
+        document.getElementById('presetName').textContent = preset.name;
+        document.getElementById('presetUseWhen').textContent = preset.useWhen;
+        document.getElementById('presetDontUseWhen').textContent = preset.dontUseWhen;
+
+        const examples = document.getElementById('presetExamples');
+        examples.innerHTML = (preset.examples || []).map(e => `<li>${e}</li>`).join('');
+
+        // Slide structure
+        const slideList = document.getElementById('presetSlideList');
+        slideList.innerHTML = preset.slides.map((s, i) => {
+            const layout = s.layout ? ` (${s.layout})` : '';
+            return `<div class="slide-list-item">
+                <span>${i + 1}.</span>
+                <span class="type">${s.type}${layout}</span>
+            </div>`;
+        }).join('');
+
+        // Layouts pill
+        const layouts = [...new Set(preset.slides.filter(s => s.layout).map(s => s.layout))];
+        document.getElementById('presetLayouts').innerHTML = layouts.length > 0
+            ? layouts.map(l => `<span class="info-pill">${l}</span>`).join('')
+            : '<span class="info-pill orange">geen layout-specifiek</span>';
+
+        // Decorations pill (gather from all slides)
+        const decoEl = document.getElementById('presetDecorations');
+        if (decoEl) {
+            const decos = [];
+            preset.slides.forEach(s => {
+                if (s.decorations) {
+                    s.decorations.forEach(d => {
+                        let label = d.type;
+                        if (d.color) label += ` (${d.color})`;
+                        if (d.asset) label += ` (${d.asset.replace('.svg','')})`;
+                        decos.push(label);
+                    });
+                }
+            });
+            decoEl.innerHTML = decos.length > 0
+                ? decos.map(d => `<span class="info-pill green">${d}</span>`).join('')
+                : '<span class="info-pill orange">geen decoraties</span>';
+        }
+    }
+
+    function updateCounter() {
+        document.getElementById('presetCounter').textContent = `${currentIdx + 1} / ${allPresets.length}`;
+    }
+
+    function nextPreset() {
+        loadPreset((currentIdx + 1) % allPresets.length);
+    }
+    function prevPreset() {
+        loadPreset((currentIdx - 1 + allPresets.length) % allPresets.length);
+    }
+
+    // ── Export Functions ──
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.transform = 'translateX(-50%) translateY(0)';
+        setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(80px)'; }, 2500);
+    }
+
+    function captureSlideObjects() {
+        // Save current slide first to ensure positions are stored
+        if (templateEditor && typeof templateEditor._saveCurrentSlide === 'function') {
+            templateEditor._saveCurrentSlide();
+        }
+        const objects = templateEditor.fabricCanvas.getObjects();
+        const elements = [];
+        objects.forEach(obj => {
+            const name = obj.layerName || 'unnamed';
+            if (name === '_skeleton' || name.startsWith('_')) return;
+            const info = {
+                name,
+                left: Math.round(obj.left),
+                top: Math.round(obj.top),
+            };
+            if (obj.width !== undefined) info.width = Math.round(obj.width);
+            if (obj.height !== undefined) info.height = Math.round(obj.height);
+            if (obj.scaleX !== undefined && Math.abs(obj.scaleX - 1) > 0.001) info.scaleX = +obj.scaleX.toFixed(4);
+            if (obj.scaleY !== undefined && Math.abs(obj.scaleY - 1) > 0.001) info.scaleY = +obj.scaleY.toFixed(4);
+            if (obj.angle) info.angle = +obj.angle.toFixed(1);
+            if (obj.flipX) info.flipX = true;
+            if (obj.flipY) info.flipY = true;
+            if (obj.fontSize) info.fontSize = obj.fontSize;
+            if (obj.opacity !== undefined && obj.opacity !== 1) info.opacity = +obj.opacity.toFixed(2);
+            elements.push(info);
+        });
+        return elements;
+    }
+
+    function exportCurrentSlide() {
+        const preset = allPresets[currentIdx];
+        const slideIdx = templateEditor.activeSlideIndex;
+        const slide = preset.slides[slideIdx];
+        const elements = captureSlideObjects();
+        const data = {
+            preset: preset.id,
+            slideIndex: slideIdx,
+            slideType: slide.type,
+            slideLayout: slide.layout || null,
+            elements,
+        };
+        const json = JSON.stringify(data, null, 2);
+        navigator.clipboard.writeText(json).then(() => {
+            showToast(`Slide ${slideIdx + 1} (${slide.type}) gekopieerd!`);
+        }).catch(() => {
+            console.log(json);
+            showToast('Kon niet kopieren — check console');
+        });
+    }
+
+    async function exportFullTemplate() {
+        const preset = allPresets[currentIdx];
+        // Capture huidige slide eerst
+        templateEditor._saveCurrentSlide();
+
+        const allSlides = [];
+        const originalSlideIdx = templateEditor.activeSlideIndex;
+
+        // Loop door alle slides en capture posities
+        for (let i = 0; i < preset.slides.length; i++) {
+            await templateEditor.switchToSlide(i);
+            // Wacht een frame voor render
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            const elements = captureSlideObjects();
+            allSlides.push({
+                slideIndex: i,
+                slideType: preset.slides[i].type,
+                slideLayout: preset.slides[i].layout || null,
+                elements,
+            });
+        }
+
+        // Restore original slide
+        await templateEditor.switchToSlide(originalSlideIdx);
+
+        const data = {
+            preset: preset.id,
+            presetName: preset.name,
+            slides: allSlides,
+        };
+        const json = JSON.stringify(data, null, 2);
+        navigator.clipboard.writeText(json).then(() => {
+            showToast(`Heel template "${preset.name}" gekopieerd! (${allSlides.length} slides)`);
+        }).catch(() => {
+            console.log(json);
+            showToast('Kon niet kopieren — check console');
+        });
+    }
+
+    init();
+</script>
+
+</body>
+</html>

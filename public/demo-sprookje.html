@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo: Sprookje of Slagveld</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:ital,wght@0,300;0,400;0,700;0,800;0,900;1,300;1,400;1,700;1,800;1,900&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/favicon-v2.svg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #111;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background: #16213e;
+            border-bottom: 1px solid #0f3460;
+            height: 52px;
+        }
+        .top-bar h1 { font-size: 16px; font-weight: 700; color: #A8D4E6; letter-spacing: 1px; }
+        .actions { display: flex; gap: 10px; }
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-blue { background: #0081C6; color: #fff; }
+        .btn-blue:hover { background: #006da8; }
+        .btn-orange { background: #BF6A01; color: #fff; }
+        .btn-orange:hover { background: #a55c01; }
+        .btn-dark { background: #3D2E32; color: #ccc; }
+        .btn-dark:hover { background: #56565A; }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+            gap: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .tab {
+            padding: 8px 16px;
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            background: transparent;
+            color: #888;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .tab.active {
+            background: rgba(0,129,198,0.15);
+            color: #A8D4E6;
+            border-color: #0081C6;
+            font-weight: 700;
+        }
+
+        #canvasWrapper {
+            background: #1a1a1a;
+            border-radius: 12px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        #canvasScaleContainer { transform-origin: top left; }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #0081C6;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.3s;
+            z-index: 99;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>DEMO: Sprookje of Slagveld</h1>
+    <div class="actions">
+        <button class="btn btn-blue" onclick="shuffleVariant()">Shuffle</button>
+        <button class="btn btn-orange" onclick="exportPDF()">Download PDF</button>
+        <button class="btn btn-dark" onclick="window.location='/'">Terug</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="tabs" id="slideTabs"></div>
+    <div id="canvasWrapper">
+        <div id="canvasScaleContainer">
+            <canvas id="slideCanvas" width="1080" height="1080"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/canvas-editor.js"></script>
+<script>
+    const CAROUSEL = {
+        title: 'Subliem Sprookje of Sluitpost van het Slagveld?',
+        topic: 'Sublimatie in ondernemen',
+        postBody: `Je hoort het vaker dan je denkt.
+
+"Het gaat prima."
+
+Maar achter die woorden schuilt soms een ander verhaal. Een verhaal van doordrukken, van wegkijken, van hopen dat het vanzelf beter wordt.
+
+Sublimatie — het vermogen om spanning om te zetten in iets productiefs — is een kracht. Maar het is ook een valkuil.
+
+Want wanneer wordt "doorpakken" eigenlijk "wegvluchten"?
+
+Wanneer is die drive niet langer ambitie, maar vermijding?
+
+De ondernemer die 70 uur werkt om niet stil te hoeven staan.
+De leider die altijd positief is om het echte gesprek te ontwijken.
+De groeier die investeert om niet naar de cijfers te hoeven kijken.
+
+Sublimatie werkt. Tot het niet meer werkt.
+
+De vraag is niet of jij dit herkent. De vraag is: durf je het toe te geven?
+
+#businessverbeteraars #ondernemen #leiderschap #zelfreflectie #groei`,
+        slides: [],
+        metadata: { author: 'Jeroen', date: new Date().toISOString() },
+    };
+
+    // ── Slide variants to cycle through ──
+    const INTRO_VARIANTS = [
+        {
+            layout: 'grid',
+            blokken: ['Sprookje?', 'Slagveld?'],
+            title: 'Subliem sprookje of sluitpost van het slagveld?',
+        },
+        {
+            layout: 'overlap',
+            blokken: ['Droom', 'Drive', 'Valkuil'],
+            title: 'Wanneer wordt ambitie vermijding?',
+        },
+        {
+            layout: 'pyramid',
+            blokken: ['Keuze', 'Sprookje', 'Slagveld'],
+            title: 'Subliem sprookje of sluitpost van het slagveld?',
+        },
+        {
+            layout: 'hero',
+            blokken: ['Sublimatie', 'Kracht', 'Valkuil', 'Keuze'],
+            title: 'Wanneer werkt doorpakken niet meer?',
+        },
+        {
+            layout: 'sidebar',
+            blokken: ['Dromen', 'Doorpakken', 'Durven'],
+            title: 'Subliem sprookje of sluitpost van het slagveld?',
+        },
+        {
+            layout: 'bottom-row',
+            blokken: ['Sprookje?', 'Slagveld?'],
+            title: 'Je kent het antwoord al',
+        },
+    ];
+
+    const CONTENT_SLIDES = [
+        {
+            type: 'content',
+            id: 'slide-2',
+            content: {
+                body: '"Het gaat prima."\n\nDat zeg je. Maar achter die woorden schuilt soms een ander verhaal. Een verhaal van doordrukken. Van wegkijken.',
+                title: 'Sublimatie is een kracht. En een valkuil.',
+                footer: '',
+            },
+        },
+        {
+            type: 'content',
+            id: 'slide-3',
+            content: {
+                body: 'De ondernemer die 70 uur werkt om niet stil te hoeven staan.\n\nDe leider die altijd positief is om het echte gesprek te ontwijken.',
+                title: 'Herken je dit?',
+                footer: '',
+            },
+        },
+        {
+            type: 'engagement',
+            id: 'slide-4',
+            content: {
+                title: 'En jij?',
+                body: 'Wanneer werd jouw "doorpakken" voor het laatst eigenlijk "wegvluchten"?',
+                cta: 'Like & comment',
+            },
+        },
+        {
+            type: 'outro',
+            id: 'slide-5',
+            content: {
+                title: 'DANKJEWEL!',
+                subtitle: 'MEER VRAGEN?',
+                body: 'businessverbeteraars.nl',
+                cta: 'Connect',
+            },
+        },
+    ];
+
+    let currentVariant = 0;
+    let demoEditor = null;
+
+    function buildCarouselData(variantIdx) {
+        const v = INTRO_VARIANTS[variantIdx % INTRO_VARIANTS.length];
+        const introSlide = {
+            type: 'intro',
+            id: 'slide-1',
+            content: {
+                subtitle: '~~~ SUBLIMATIE IN ONDERNEMEN ~~~',
+                title: v.title,
+                cta: 'Swipe voor het antwoord',
+                blokken: v.blokken,
+            },
+            visuals: { style: 'cover', layout: v.layout },
+        };
+        return {
+            ...CAROUSEL,
+            slides: [introSlide, ...CONTENT_SLIDES],
+        };
+    }
+
+    async function init() {
+        demoEditor = new SlideCanvasEditor('slideCanvas', null, null);
+        demoEditor._updateCanvasScale = function() {
+            const wrapper = document.getElementById('canvasWrapper');
+            if (!wrapper) return;
+            const area = wrapper.parentElement;
+            const availH = area.clientHeight - 80;
+            const availW = area.clientWidth - 48;
+            const scale = Math.min(availW / 1080, availH / 1080, 1);
+            const container = document.getElementById('canvasScaleContainer');
+            if (container) {
+                container.style.transform = `scale(${scale})`;
+                container.style.width = '1080px';
+                container.style.height = '1080px';
+            }
+            wrapper.style.width = Math.round(1080 * scale) + 'px';
+            wrapper.style.height = Math.round(1080 * scale) + 'px';
+        };
+
+        await loadVariant(0);
+        window.addEventListener('resize', () => demoEditor._updateCanvasScale());
+    }
+
+    async function loadVariant(variantIdx) {
+        currentVariant = variantIdx;
+        const data = buildCarouselData(variantIdx);
+        await demoEditor.loadSlides(data);
+        demoEditor._updateCanvasScale();
+        renderTabs(data.slides);
+    }
+
+    function renderTabs(slides) {
+        const container = document.getElementById('slideTabs');
+        container.innerHTML = slides.map((s, i) => {
+            const label = s.type.charAt(0).toUpperCase() + s.type.slice(1);
+            return `<button class="tab ${i === 0 ? 'active' : ''}" onclick="switchSlide(${i}, this)">
+                ${i + 1}. ${label}
+            </button>`;
+        }).join('');
+    }
+
+    function switchSlide(idx, btn) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        demoEditor.switchToSlide(idx);
+    }
+
+    async function shuffleVariant() {
+        currentVariant = (currentVariant + 1) % INTRO_VARIANTS.length;
+        const v = INTRO_VARIANTS[currentVariant];
+        await loadVariant(currentVariant);
+        showToast(`Layout: ${v.layout} — ${v.blokken.join(', ')}`);
+    }
+
+    async function exportPDF() {
+        if (demoEditor) {
+            showToast('PDF wordt gegenereerd...');
+            await demoEditor.exportPDF();
+            showToast('PDF gedownload!');
+        }
+    }
+
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    init();
+</script>
+</body>
+</html>

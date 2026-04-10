@@ -10,6 +10,18 @@
  * - Logo bottom-right on every slide
  */
 
+// ── Fix Fabric.js v5 'alphabetical' textBaseline bug ──────────────
+// Fabric.js sets ctx.textBaseline = 'alphabetical' but browsers only accept 'alphabetic'.
+if (typeof fabric !== 'undefined' && fabric.Text) {
+    const origRender = fabric.Text.prototype._renderTextCommon;
+    if (origRender) {
+        fabric.Text.prototype._renderTextCommon = function(ctx, method) {
+            if (ctx.textBaseline === 'alphabetical') ctx.textBaseline = 'alphabetic';
+            return origRender.call(this, ctx, method);
+        };
+    }
+}
+
 // ── Constants ──────────────────────────────────────────────────────
 const SLIDE_SIZE = 1080;
 
@@ -51,14 +63,24 @@ const PAPER_PRESET = {
 };
 
 // ── Safe area (text margins within the paper) ─────────────────────
-// Text/content elements are clamped to this region so they never
-// overlap the paper edges or the bottom logo area.
 const SAFE_AREA = {
     left: 100,
     top: 90,
-    right: 990,   // paper right edge minus margin
-    bottom: 830,  // above logo zone
+    right: 990,
+    bottom: 830,
 };
+
+// ── Unified slide zones — gives every layout consistent vertical rhythm ──
+const ZONES = {
+    header:  { top: 95,  bottom: 155 },   // subtitle (~35-40px tall + padding)
+    title:   { top: 165, bottom: 305 },   // 1-3 lines title
+    content: { top: 320, bottom: 770 },   // bloks + decorations area
+    footer:  { top: 780, bottom: 1000 },  // CTA + logo area
+};
+
+// ── LinkedIn next-slide swipe anchor — op de rechterrand van het papier, verticaal midden ──
+// Papier loopt van x=30 tot x=1050 (renderedSize 1020). Tip eindigt net binnen de paper rand.
+const LINKEDIN_NEXT_ANCHOR = { x: 1000, y: 540 };
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -161,16 +183,123 @@ class SlideCanvasEditor {
         this.slidesData = [];
         this.activeSlideIndex = -1;
 
+        // Undo/Redo history
+        this.undoStack = [];
+        this.redoStack = [];
+        this.maxHistory = 50;
+        this.suppressHistory = false;
+
         this.fabricCanvas.on('selection:created', () => this._syncLayerSelection());
         this.fabricCanvas.on('selection:updated', () => this._syncLayerSelection());
         this.fabricCanvas.on('selection:cleared', () => this._syncLayerSelection());
 
-        // Clamp movable objects within the safe area (paper margins)
-        this.fabricCanvas.on('object:moving', (e) => this._clampToSafeArea(e.target));
-        this.fabricCanvas.on('object:scaling', (e) => this._clampToSafeArea(e.target));
+        // Track only user modifications — added/removed are handled manually
+        this.fabricCanvas.on('object:modified', () => this._pushHistory());
+
+        // Keyboard shortcuts: backspace/delete = remove, ctrl+z = undo, ctrl+shift+z = redo
+        this._keyHandler = (e) => {
+            // Skip if user is typing in an input/textarea
+            const tag = document.activeElement && document.activeElement.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement && document.activeElement.isContentEditable)) return;
+
+            // Skip if Fabric.js is actively editing text
+            const active = this.fabricCanvas.getActiveObject();
+            if (active && active.isEditing) return;
+
+            const key = e.key;
+            const isMod = e.metaKey || e.ctrlKey;
+
+            // Delete / Backspace → remove selected
+            if ((key === 'Delete' || key === 'Backspace') && active && !active.layerLocked) {
+                e.preventDefault();
+                this._deleteActive();
+                return;
+            }
+
+            // Cmd/Ctrl + Z → undo
+            if (isMod && !e.shiftKey && (key === 'z' || key === 'Z')) {
+                e.preventDefault();
+                this.undo();
+                return;
+            }
+
+            // Cmd/Ctrl + Shift + Z → redo
+            if (isMod && e.shiftKey && (key === 'z' || key === 'Z')) {
+                e.preventDefault();
+                this.redo();
+                return;
+            }
+
+            // Cmd/Ctrl + Y → redo (alternative)
+            if (isMod && (key === 'y' || key === 'Y')) {
+                e.preventDefault();
+                this.redo();
+                return;
+            }
+        };
+        document.addEventListener('keydown', this._keyHandler);
 
         this._updateCanvasScale();
         window.addEventListener('resize', () => this._updateCanvasScale());
+    }
+
+    // ── Undo/Redo ─────────────────────────────────────────────────
+    _pushHistory() {
+        if (this.suppressHistory) return;
+        try {
+            const snapshot = JSON.stringify(this.fabricCanvas.toJSON(['layerName', 'layerLocked', 'layerVisible']));
+            this.undoStack.push(snapshot);
+            if (this.undoStack.length > this.maxHistory) this.undoStack.shift();
+            this.redoStack = []; // clear redo on new action
+        } catch (e) {
+            console.warn('History push failed:', e);
+        }
+    }
+
+    undo() {
+        if (this.undoStack.length < 2) return; // need at least one previous state
+        const current = this.undoStack.pop();
+        this.redoStack.push(current);
+        const prev = this.undoStack[this.undoStack.length - 1];
+        this._restoreSnapshot(prev);
+    }
+
+    redo() {
+        if (this.redoStack.length === 0) return;
+        const next = this.redoStack.pop();
+        this.undoStack.push(next);
+        this._restoreSnapshot(next);
+    }
+
+    _restoreSnapshot(json) {
+        this.suppressHistory = true;
+        this.fabricCanvas.loadFromJSON(json, () => {
+            this.fabricCanvas.renderAll();
+            // Use rAF to ensure all events are flushed before re-enabling
+            requestAnimationFrame(() => {
+                this.suppressHistory = false;
+            });
+        });
+    }
+
+    _deleteActive() {
+        const active = this.fabricCanvas.getActiveObject();
+        if (!active) return;
+        if (active.layerName === 'Papier' || active.layerLocked) return;
+
+        // Handle multi-selection
+        if (active.type === 'activeSelection') {
+            active.forEachObject(obj => {
+                if (obj.layerName !== 'Papier' && !obj.layerLocked) {
+                    this.fabricCanvas.remove(obj);
+                }
+            });
+            this.fabricCanvas.discardActiveObject();
+        } else {
+            this.fabricCanvas.remove(active);
+        }
+        this.fabricCanvas.renderAll();
+        this._pushHistory();
     }
 
     // ── Public API ──────────────────────────────────────────────────
@@ -262,23 +391,48 @@ class SlideCanvasEditor {
     async loadSlides(carouselData) {
         await ensureFontsLoaded();
 
+        // Lazy-load slide layout overrides (alle exact gepositioneerde elementen per preset)
+        if (!this._slideLayouts) {
+            try {
+                const res = await fetch('/assets/slideLayouts.json');
+                this._slideLayouts = await res.json();
+            } catch (e) {
+                console.warn('slideLayouts.json niet geladen:', e);
+                this._slideLayouts = { presets: {} };
+            }
+        }
+
+        // Suppress history during initial load
+        this.suppressHistory = true;
+
         // Reset state so switchToSlide doesn't skip index 0
         this.activeSlideIndex = -1;
         this.slidesData = carouselData.slides;
+        this.carouselMeta = carouselData.metadata || {};
+        this.presetId = (this.carouselMeta && this.carouselMeta.presetId) || null;
         this.slideObjects = [];
+        this.undoStack = [];
+        this.redoStack = [];
 
         for (let i = 0; i < this.slidesData.length; i++) {
             const objects = await this._buildSlideObjects(this.slidesData[i], i);
+            // Apply exact layout overrides if defined for this preset/slide
+            await this._applyLayoutOverrides(objects, i);
             this.slideObjects.push(objects);
         }
 
         this._renderSlideTabs();
         this.switchToSlide(0);
         requestAnimationFrame(() => this._updateCanvasScale());
+
+        // Re-enable history and capture initial state
+        this.suppressHistory = false;
+        setTimeout(() => this._pushHistory(), 100);
     }
 
     switchToSlide(index) {
         if (index === this.activeSlideIndex) return;
+        this.suppressHistory = true;
         this._saveCurrentSlide();
 
         const current = this.fabricCanvas.getObjects().slice();
@@ -301,6 +455,12 @@ class SlideCanvasEditor {
         this.fabricCanvas.renderAll();
         this._renderLayerPanel();
         this._renderSlideTabs();
+
+        // Reset history per slide so undo doesn't cross slides
+        this.undoStack = [];
+        this.redoStack = [];
+        this.suppressHistory = false;
+        setTimeout(() => this._pushHistory(), 50);
     }
 
     async exportPDF() {
@@ -400,13 +560,13 @@ class SlideCanvasEditor {
         let contentObjects;
         switch (slide.type) {
             case 'intro':
-                contentObjects = this._buildIntroContent(slide);
+                contentObjects = await this._buildIntroContent(slide);
                 break;
             case 'content':
                 contentObjects = await this._buildContentContent(slide);
                 break;
             case 'engagement':
-                contentObjects = this._buildEngagementContent(slide);
+                contentObjects = await this._buildEngagementContent(slide);
                 break;
             case 'outro':
                 contentObjects = this._buildOutroContent(slide);
@@ -532,11 +692,16 @@ class SlideCanvasEditor {
                 }));
             }
 
-            // Text label centered on the blok
+            // Text label centered on the blok — auto-shrink for longer words
+            let blokFontSize = 26;
+            if (labels[i].length > 10) blokFontSize = 18;
+            else if (labels[i].length > 7) blokFontSize = 20;
+            else if (labels[i].length > 5) blokFontSize = 22;
+
             objects.push(new fabric.Text(labels[i], {
                 left: x + blokSize / 2,
                 top: centerY,
-                fontSize: 26,
+                fontSize: blokFontSize,
                 fontFamily: FONT_MAIN,
                 fontWeight: '700',
                 fill: '#FFFFFF',
@@ -562,75 +727,1156 @@ class SlideCanvasEditor {
     // - Engagement: same as content but with "Like & comment"
     // - Outro: "DANKJEWEL!", "MEER VRAGEN?", URL, "Like & comment"
 
-    _buildIntroContent(slide) {
+    async _buildIntroContent(slide) {
         const objects = [];
         const contentLeft = SAFE_AREA.left + 40;
         const contentWidth = SAFE_AREA.right - SAFE_AREA.left - 80;
 
-        // Header / Subtitle (Caveat, top center — "~~~ DE VRAAG VAN VANDAAG ~~~")
+        const hasBlokken = slide.content.blokken && slide.content.blokken.length > 0;
+        const blokCount = hasBlokken ? slide.content.blokken.length : 0;
+        const layout = (slide.visuals && slide.visuals.layout) || 'grid';
+
+        // ── Layout-specific positioning ────────────────────────────
+        const layoutConfig = this._getIntroLayoutConfig(layout, hasBlokken);
+
+        // Compute blok-grid geometry for collision-aware decorations
+        this._currentBlokGeometry = this._getBlokGeometry(layout, blokCount);
+
+        // ── Header / Subtitle ──
+        // Always horizontally centered — stack blijft links uitgelijnd (blokken zijn links)
+        const isSideLayout = layout === 'stack';
+        const headerLeft = isSideLayout ? 380 : 140;
+        const headerWidth = isSideLayout ? 540 : 800;
+        const headerAlign = isSideLayout ? 'left' : 'center';
+
         if (slide.content.subtitle) {
             objects.push(new fabric.Textbox(slide.content.subtitle, {
-                left: contentLeft,
-                top: 110,
-                width: contentWidth,
-                fontFamily: FONT_HAND,
+                left: headerLeft,
+                top: ZONES.header.top,
+                width: headerWidth,
+                fontFamily: FONT_MAIN,
                 fontSize: 28,
-                fontWeight: '700',
+                fontWeight: '800',
+                fontStyle: 'italic',
                 fill: BRAND.secondary,
-                textAlign: 'center',
+                textAlign: headerAlign,
                 selectable: true,
                 layerName: 'Header',
             }));
         }
 
-        // Title (big, bold, italic, uppercase — takes up large center area)
+        // ── Title — auto-sizing based on length ──
         if (slide.content.title) {
-            objects.push(new fabric.Textbox(slide.content.title.toUpperCase(), {
-                left: contentLeft,
-                top: 220,
-                width: contentWidth,
+            const upperTitle = slide.content.title.toUpperCase();
+            // Auto-fit font size: shorter titles = larger
+            let titleFontSize;
+            if (upperTitle.length <= 25) titleFontSize = 56;
+            else if (upperTitle.length <= 45) titleFontSize = 48;
+            else if (upperTitle.length <= 65) titleFontSize = 42;
+            else titleFontSize = 36;
+
+            objects.push(new fabric.Textbox(upperTitle, {
+                left: headerLeft,
+                top: ZONES.title.top,
+                width: headerWidth,
                 fontFamily: FONT_MAIN,
-                fontSize: 58,
-                fontWeight: '800',
+                fontSize: titleFontSize,
+                fontWeight: '300',
                 fontStyle: 'italic',
                 fill: BRAND.secondary,
-                textAlign: 'center',
+                textAlign: headerAlign,
                 lineHeight: 1.15,
                 selectable: true,
                 layerName: 'Titel',
             }));
         }
 
-        // CTA "Klik hier" (calibrated from user)
+        // ── Blokken ──
+        if (hasBlokken) {
+            const blokkenObjects = await this._createIntroBlokkenLayout(slide.content.blokken, layout);
+            objects.push(...blokkenObjects);
+        }
+
+        // ── CTA "Klik hier" — per layout een passende positie + pijlhoek ──
+        // De pijlpunt eindigt ALTIJD op LINKEDIN_NEXT_ANCHOR (paper rechterrand, midden)
+        // De tekst staat aan de basis van de pijl, niet bij de tip
+        const ctaPreset = this._getCtaPreset(layout, blokCount, slide);
+
         objects.push(new fabric.Textbox('Klik\nhier', {
-            left: 849,
-            top: 482,
+            left: ctaPreset.textLeft,
+            top: ctaPreset.textTop,
             width: 100,
             fontFamily: FONT_HAND,
             fontSize: 32,
             fontWeight: '700',
             fill: BRAND.primary,
             textAlign: 'center',
-            lineHeight: 1.1,
+            lineHeight: 0.85,
             scaleX: 1.477,
             scaleY: 1.477,
             selectable: true,
             layerName: 'CTA',
         }));
 
-        // Arrow pointing up-right (calibrated from user)
-        objects.push(new fabric.Text('\u2197', {
-            left: 945,
-            top: 422,
-            fontSize: 40,
-            scaleX: 1.576,
-            scaleY: 1.576,
-            fill: BRAND.primary,
-            selectable: true,
-            layerName: 'CTA Pijl',
-        }));
+        // Arrow — pijlpunt eindigt EXACT op LinkedIn next-anker (paper rand, midden)
+        // CTA pijl is ALTIJD zwart voor herkenbaarheid (niet random)
+        try {
+            const arrowImg = await loadImageAsync('/assets/pijlen/korte pijl dikgedrukt links zwart.png');
+            const TIP_NATIVE = { x: 15, y: 88 };
+            const PNG_W = 375, PNG_H = 177;
+            const FLIP_X = true;
+            const SCALE = 0.213;
+            const ANGLE = ctaPreset.arrowAngle;
+
+            const tipLocalX = FLIP_X ? (PNG_W - TIP_NATIVE.x) : TIP_NATIVE.x;
+            const tipLocalY = TIP_NATIVE.y;
+
+            const props = this._positionAtTipAnchor(
+                PNG_W, PNG_H, SCALE, SCALE, ANGLE, tipLocalX, tipLocalY, LINKEDIN_NEXT_ANCHOR
+            );
+
+            arrowImg.set({
+                left: props.left,
+                top: props.top,
+                scaleX: SCALE,
+                scaleY: SCALE,
+                flipX: FLIP_X,
+                angle: ANGLE,
+                selectable: true,
+                evented: true,
+                layerName: 'CTA Pijl',
+            });
+            objects.push(arrowImg);
+        } catch (e) {
+            objects.push(new fabric.Text('\u2197', {
+                left: layoutConfig.arrow.left,
+                top: layoutConfig.arrow.top,
+                fontSize: 40, scaleX: 1.576, scaleY: 1.576,
+                fill: BRAND.primary, selectable: true, layerName: 'CTA Pijl',
+            }));
+        }
+
+        // ── Lamp icon (alleen bij relevante onderwerpen) ─────────
+        if (this.carouselMeta && this.carouselMeta.lampIcoon) {
+            try {
+                const lamp = await loadImageAsync('/assets/lamp-icon.svg');
+                const lampScale = 90 / lamp.width;
+                lamp.set({
+                    left: 100,
+                    top: 760,
+                    scaleX: lampScale,
+                    scaleY: lampScale,
+                    angle: -8,
+                    selectable: true,
+                    evented: true,
+                    layerName: 'Idee Lamp',
+                });
+                objects.push(lamp);
+            } catch (e) {
+                // ignore if not found
+            }
+        }
+
+        // ── Decorations from preset (arrows, business graphics, frames, lines) ──
+        if (slide.decorations && Array.isArray(slide.decorations)) {
+            for (let i = 0; i < slide.decorations.length; i++) {
+                let dec = slide.decorations[i];
+                // Resolve anchor-based positioning if specified
+                if (dec.anchor && this._currentBlokGeometry) {
+                    dec = this._resolveAnchoredDecoration(dec, this._currentBlokGeometry);
+                    if (!dec) continue;
+                }
+                const decObj = await this._buildDecoration(dec, i);
+                if (decObj) objects.push(decObj);
+            }
+        }
 
         return objects;
+    }
+
+    /**
+     * Pas exact-positie overrides toe op een slide.
+     * Leest uit this._slideLayouts (geladen uit /assets/slideLayouts.json).
+     * Per element kan worden overschreven: positie, scale, angle, flipX, fontSize, opacity, src (image url).
+     * Speciale support: voor pijlen kan een "color" of "src" worden meegegeven om een andere afbeelding te tonen.
+     */
+    async _applyLayoutOverrides(objects, slideIndex) {
+        if (!this._slideLayouts || !this.presetId) return;
+        const presetEntry = this._slideLayouts.presets[this.presetId];
+        if (!presetEntry || !presetEntry.slides) return;
+        const slideEntry = presetEntry.slides.find(s => s.slideIndex === slideIndex);
+        if (!slideEntry || !slideEntry.elements) return;
+
+        const overrides = slideEntry.elements;
+
+        // Helper: vind override entry via exacte naam OF via prefix-match
+        // (zodat "Lange Pijl lichtoranje" in JSON matched met huidige "Lange Pijl blauw" object)
+        const findOverride = (objName) => {
+            if (overrides[objName]) return overrides[objName];
+            // Voor pijlen: probeer prefix te matchen ("Pijl Dik X", "Pijl Dun X", "Lange Pijl X", "CTA Pijl")
+            const PREFIXES = ['Pijl Dik', 'Pijl Dun', 'Lange Pijl', 'CTA Pijl', 'Frame', 'Lijn'];
+            for (const prefix of PREFIXES) {
+                if (objName.startsWith(prefix)) {
+                    // Zoek een key in overrides die met dezelfde prefix begint
+                    for (const key of Object.keys(overrides)) {
+                        if (key.startsWith(prefix)) return overrides[key];
+                    }
+                }
+            }
+            return null;
+        };
+
+        for (const obj of objects) {
+            const name = obj.layerName;
+            if (!name) continue;
+            const o = findOverride(name);
+            if (!o) continue;
+
+            // Optionele image-source swap (kleur wisselen voor pijlen, etc.)
+            if ((o.src || o.color) && obj.type === 'image') {
+                let newSrc = o.src;
+                // Helper: bepaal asset URL op basis van layer name + nieuwe kleur
+                if (!newSrc && o.color) {
+                    newSrc = this._resolveColorSwap(name, o.color);
+                }
+                if (newSrc) {
+                    try {
+                        const img = await loadImageAsync(newSrc);
+                        // Vervang de source van het bestaande Fabric Image object
+                        obj.setElement(img.getElement());
+                    } catch (e) {
+                        console.warn('Kon kleur-swap niet laden:', newSrc);
+                    }
+                }
+            }
+
+            const props = {};
+            if (o.left !== undefined) props.left = o.left;
+            if (o.top !== undefined) props.top = o.top;
+            if (o.scaleX !== undefined) props.scaleX = o.scaleX;
+            if (o.scaleY !== undefined) props.scaleY = o.scaleY;
+            if (o.angle !== undefined) props.angle = o.angle;
+            if (o.flipX !== undefined) props.flipX = o.flipX;
+            if (o.flipY !== undefined) props.flipY = o.flipY;
+            if (o.fontSize !== undefined) props.fontSize = o.fontSize;
+            if (o.opacity !== undefined) props.opacity = o.opacity;
+
+            obj.set(props);
+            if (obj.setCoords) obj.setCoords();
+        }
+    }
+
+    /**
+     * Bepaal nieuwe image URL op basis van layer-naam + gewenste kleur.
+     * Werkt voor pijlen (Pijl Dik, Pijl Dun, Lange Pijl) en CTA Pijl.
+     */
+    _resolveColorSwap(layerName, color) {
+        const c = color.toLowerCase();
+        // Pijl Dik {color}
+        if (/^pijl dik/i.test(layerName)) {
+            return `/assets/pijlen/korte pijl dikgedrukt links ${c}.png`;
+        }
+        // Pijl Dun {color}
+        if (/^pijl dun/i.test(layerName)) {
+            return `/assets/pijlen/korte pijl ${c} links wijzend.png`;
+        }
+        // Lange Pijl {color}
+        if (/^lange pijl/i.test(layerName)) {
+            if (c === 'blauw') return `/assets/pijlen/lange pijl blauw 1.png`;
+            return `/assets/pijlen/lange pijl ${c} rechts wijzend.png`;
+        }
+        // CTA Pijl — altijd korte dikke pijl, kleur naar keuze
+        if (layerName === 'CTA Pijl') {
+            return `/assets/pijlen/korte pijl dikgedrukt links ${c}.png`;
+        }
+        return null;
+    }
+
+    /**
+     * Schat de bounding box van een decoratie op basis van type + native dimensies.
+     * Wordt gebruikt door _getCtaPreset om CTA over decoraties te voorkomen.
+     */
+    _estimateDecorationBox(dec) {
+        if (!dec || dec.x === undefined || dec.y === undefined) return null;
+
+        // Native dimensies per asset type
+        const NATIVE_DIMS = {
+            'arrow-thick': { w: 375, h: 177 },
+            'arrow-thin': { w: 372, h: 154 },
+            'long-arrow': { w: 1900, h: 130 },
+            'frame-square': { w: 470, h: 604 },
+            'frame-portrait': { w: 857, h: 1131 },
+            'frame-landscape': { w: 914, h: 604 },
+            'line-h': { w: 814, h: 85 },
+            'line-v': { w: 74, h: 1131 },
+            'business-svg': { w: 600, h: 600 }, // approximation
+        };
+        const native = NATIVE_DIMS[dec.type] || { w: 400, h: 400 };
+        const scaleX = dec.scaleX !== undefined ? dec.scaleX : (dec.scale || 0.3);
+        const scaleY = dec.scaleY !== undefined ? dec.scaleY : (dec.scale || 0.3);
+
+        return {
+            x: dec.x,
+            y: dec.y,
+            w: native.w * scaleX,
+            h: native.h * scaleY,
+        };
+    }
+
+    /**
+     * CTA placement — vaste positie met klassieke hoek.
+     * Gevalideerd voor alle layouts: blokken zitten nooit boven y<492 in de rechter helft (x>855).
+     * Pijl gaat van (855, 380) richting LinkedIn anchor (1000, 540), hoek -25°.
+     *
+     * Voor specifieke layouts waar blokken de tekst-zone bezetten (bottom-row 5 blokken)
+     * worden alternatieve posities gebruikt.
+     */
+    _getCtaPreset(layout, blokCount, _slide) {
+        // Default: rechts boven anker, klassieke hoek
+        let textLeft = 855;
+        let textTop = 380;
+        let arrowAngle = -25;
+
+        // Geen overrides nodig — alle layouts hebben rechts-bovenhoek vrij
+        // Als specifieke layouts dit later wel nodig hebben, voeg hier toe:
+        // if (layout === 'bottom-row' && blokCount >= 5) { ... }
+
+        return { textLeft, textTop, arrowAngle };
+    }
+
+    /**
+     * Compute left/top for an image so that a specific point on the image
+     * (tipLocalX, tipLocalY in original PNG coords) lands EXACTLY on `anchor`
+     * after applying scaleX, scaleY, angle (in degrees) and flipX.
+     *
+     * Fabric.js rotates around the object center by default with originX/Y='left'/'top'.
+     * We compute where the tip would be relative to center, rotate it, and back-solve left/top.
+     */
+    _positionAtTipAnchor(pngW, pngH, scaleX, scaleY, angleDeg, tipLocalX, tipLocalY, anchor) {
+        // Object dimensions on canvas
+        const w = pngW * scaleX;
+        const h = pngH * scaleY;
+
+        // Tip in object's local frame (relative to top-left)
+        const tipObjX = tipLocalX * scaleX;
+        const tipObjY = tipLocalY * scaleY;
+
+        // Center of object in local frame
+        const cx = w / 2;
+        const cy = h / 2;
+
+        // Vector from center to tip (local frame)
+        const dx = tipObjX - cx;
+        const dy = tipObjY - cy;
+
+        // Apply rotation (Fabric rotates clockwise positive)
+        const rad = angleDeg * Math.PI / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const rotatedDx = dx * cos - dy * sin;
+        const rotatedDy = dx * sin + dy * cos;
+
+        // Object center should be at (anchor - rotatedDelta)
+        const targetCenterX = anchor.x - rotatedDx;
+        const targetCenterY = anchor.y - rotatedDy;
+
+        // left/top is top-left corner = center - half size
+        return {
+            left: targetCenterX - w / 2,
+            top: targetCenterY - h / 2,
+        };
+    }
+
+    /**
+     * Returns geometry of the blok grid for the given layout + blok count.
+     * Returns: { bloks: [{x,y,w,h}], gridLeft, gridTop, gridRight, gridBottom, gapH (between cols), gapV (between rows) }
+     * This MUST mirror what _createIntroBlokkenLayout actually places.
+     */
+    _getBlokGeometry(layout, count) {
+        const SLIDE = SLIDE_SIZE;
+        const contentMidY = (ZONES.content.top + ZONES.content.bottom) / 2;
+
+        switch (layout) {
+            case 'sidebar': {
+                const blokW = 220, blokH = 150, gap = 12;
+                const x = (SLIDE - blokW) / 2; // horizontaal gecentreerd
+                const totalH = count * blokH + (count - 1) * gap;
+                const startY = contentMidY - totalH / 2;
+                const bloks = [];
+                for (let i = 0; i < count; i++) {
+                    bloks.push({ x, y: startY + i * (blokH + gap), w: blokW, h: blokH });
+                }
+                return this._geomFromBloks(bloks);
+            }
+            case 'hero': {
+                const heroW = 320, heroH = 228;
+                const heroX = (SLIDE - heroW) / 2;
+                const smallW = 160, smallH = 114, smallGap = 18;
+                const smallCount = Math.max(0, count - 1);
+                const totalH = heroH + (smallCount > 0 ? 30 + smallH : 0);
+                const startY = contentMidY - totalH / 2;
+                const bloks = [{ x: heroX, y: startY, w: heroW, h: heroH }];
+                if (smallCount > 0) {
+                    const totalSmallW = smallCount * smallW + (smallCount - 1) * smallGap;
+                    const smallStartX = (SLIDE - totalSmallW) / 2;
+                    const smallY = startY + heroH + 30;
+                    for (let i = 1; i < count; i++) {
+                        const x = smallStartX + (i - 1) * (smallW + smallGap);
+                        bloks.push({ x, y: smallY, w: smallW, h: smallH });
+                    }
+                }
+                return this._geomFromBloks(bloks);
+            }
+            case 'diagonal': {
+                const blokW = 220, blokH = 156;
+                const maxX = SLIDE - blokW - 80;
+                const maxY = ZONES.content.bottom - blokH;
+                const minX = 80;
+                const minY = ZONES.content.top;
+                const stepX = count > 1 ? Math.min(160, (maxX - minX) / (count - 1)) : 0;
+                const stepY = count > 1 ? Math.min(120, (maxY - minY) / (count - 1)) : 0;
+                const totalSpanX = (count - 1) * stepX;
+                const totalSpanY = (count - 1) * stepY;
+                const startX = (SLIDE - totalSpanX - blokW) / 2;
+                const startY = contentMidY - (totalSpanY + blokH) / 2;
+                const bloks = [];
+                for (let i = 0; i < count; i++) {
+                    bloks.push({ x: startX + i * stepX, y: startY + i * stepY, w: blokW, h: blokH });
+                }
+                return this._geomFromBloks(bloks);
+            }
+            case 'bottom-row': {
+                const gap = 18;
+                const maxW = 880;
+                const blokW = Math.min(210, (maxW - (count - 1) * gap) / count);
+                const blokH = Math.round(blokW * 0.71);
+                const totalW = count * blokW + (count - 1) * gap;
+                const startX = (SLIDE - totalW) / 2;
+                const y = ZONES.content.top + (ZONES.content.bottom - ZONES.content.top) * 0.55 - blokH / 2;
+                const bloks = [];
+                for (let i = 0; i < count; i++) {
+                    bloks.push({ x: startX + i * (blokW + gap), y, w: blokW, h: blokH });
+                }
+                return this._geomFromBloks(bloks);
+            }
+            case 'pyramid': {
+                const blokW = 250, blokH = 178, gap = 20, verticalGap = 30;
+                const bloks = [];
+                if (count === 3) {
+                    const totalH = blokH * 2 + verticalGap;
+                    const startY = contentMidY - totalH / 2;
+                    bloks.push({ x: (SLIDE - blokW) / 2, y: startY, w: blokW, h: blokH });
+                    const bottomX = (SLIDE - (2 * blokW + gap)) / 2;
+                    for (let i = 1; i < 3; i++) bloks.push({ x: bottomX + (i - 1) * (blokW + gap), y: startY + blokH + verticalGap, w: blokW, h: blokH });
+                } else if (count === 4) {
+                    const smallW = 200, smallH = 142;
+                    const totalH = blokH + verticalGap + smallH;
+                    const startY = contentMidY - totalH / 2;
+                    bloks.push({ x: (SLIDE - blokW) / 2, y: startY, w: blokW, h: blokH });
+                    const bottomX = (SLIDE - (3 * smallW + 2 * gap)) / 2;
+                    for (let i = 1; i < 4; i++) bloks.push({ x: bottomX + (i - 1) * (smallW + gap), y: startY + blokH + verticalGap, w: smallW, h: smallH });
+                } else {
+                    const totalW = count * blokW + (count - 1) * gap;
+                    const startX = (SLIDE - totalW) / 2;
+                    const startY = contentMidY - blokH / 2;
+                    for (let i = 0; i < count; i++) bloks.push({ x: startX + i * (blokW + gap), y: startY, w: blokW, h: blokH });
+                }
+                return this._geomFromBloks(bloks);
+            }
+            case 'scattered': {
+                const cTop = ZONES.content.top;
+                const cBot = ZONES.content.bottom;
+                const zoneH = cBot - cTop;
+                const placements5 = [
+                    { rx: 0.13, ry: 0.05, w: 230, h: 164 }, { rx: 0.50, ry: 0.02, w: 220, h: 156 },
+                    { rx: 0.13, ry: 0.45, w: 220, h: 156 }, { rx: 0.45, ry: 0.45, w: 220, h: 156 },
+                    { rx: 0.18, ry: 0.85, w: 210, h: 150 },
+                ];
+                const placements4 = [
+                    { rx: 0.13, ry: 0.05, w: 240, h: 170 }, { rx: 0.50, ry: 0.02, w: 230, h: 164 },
+                    { rx: 0.18, ry: 0.55, w: 230, h: 164 }, { rx: 0.50, ry: 0.55, w: 220, h: 156 },
+                ];
+                const pl = count >= 5 ? placements5 : placements4;
+                const bloks = [];
+                for (let i = 0; i < count; i++) {
+                    const p = pl[i % pl.length];
+                    bloks.push({ x: p.rx * SLIDE, y: cTop + p.ry * zoneH, w: p.w, h: p.h });
+                }
+                return this._geomFromBloks(bloks);
+            }
+            case 'stack': {
+                const blokW = 220, blokH = 130, gap = 12, x = 130;
+                const totalH = count * blokH + (count - 1) * gap;
+                const startY = contentMidY - totalH / 2;
+                const bloks = [];
+                for (let i = 0; i < count; i++) bloks.push({ x, y: startY + i * (blokH + gap), w: blokW, h: blokH });
+                return this._geomFromBloks(bloks);
+            }
+            case 'overlap': {
+                const blokW = 220, blokH = 157, step = 156;
+                const totalW = blokW + (count - 1) * step;
+                const startX = (SLIDE - totalW) / 2;
+                const y = contentMidY - blokH / 2;
+                const bloks = [];
+                for (let i = 0; i < count; i++) bloks.push({ x: startX + i * step, y, w: blokW, h: blokH });
+                return this._geomFromBloks(bloks);
+            }
+            case 'grid':
+            default: {
+                if (count === 4) {
+                    const blokW = 230, blokH = 164, gap = 20;
+                    const gridW = 2 * blokW + gap;
+                    const gridH = 2 * blokH + gap;
+                    const startX = (SLIDE - gridW) / 2;
+                    const startY = contentMidY - gridH / 2;
+                    const bloks = [
+                        { x: startX, y: startY, w: blokW, h: blokH },
+                        { x: startX + blokW + gap, y: startY, w: blokW, h: blokH },
+                        { x: startX, y: startY + blokH + gap, w: blokW, h: blokH },
+                        { x: startX + blokW + gap, y: startY + blokH + gap, w: blokW, h: blokH },
+                    ];
+                    const geom = this._geomFromBloks(bloks);
+                    geom.cols = 2;
+                    geom.rows = 2;
+                    geom.colGapX = startX + blokW + gap / 2;
+                    geom.rowGapY = startY + blokH + gap / 2;
+                    return geom;
+                } else {
+                    const blokW = 230, blokH = 164, gap = 20;
+                    const totalWidth = count * blokW + (count - 1) * gap;
+                    const startX = (SLIDE - totalWidth) / 2;
+                    const startY = contentMidY - blokH / 2;
+                    const bloks = [];
+                    for (let i = 0; i < count; i++) bloks.push({ x: startX + i * (blokW + gap), y: startY, w: blokW, h: blokH });
+                    return this._geomFromBloks(bloks);
+                }
+            }
+        }
+    }
+
+    /** Helper: compute bounding box from list of bloks */
+    _geomFromBloks(bloks) {
+        if (bloks.length === 0) return { bloks: [], gridLeft: 0, gridTop: 0, gridRight: 0, gridBottom: 0 };
+        let gridLeft = Infinity, gridTop = Infinity, gridRight = -Infinity, gridBottom = -Infinity;
+        for (const b of bloks) {
+            if (b.x < gridLeft) gridLeft = b.x;
+            if (b.y < gridTop) gridTop = b.y;
+            if (b.x + b.w > gridRight) gridRight = b.x + b.w;
+            if (b.y + b.h > gridBottom) gridBottom = b.y + b.h;
+        }
+        return { bloks, gridLeft, gridTop, gridRight, gridBottom };
+    }
+
+    /**
+     * Resolve anchor-based decoration position to absolute x/y/scale.
+     * Anchor types:
+     *   - "grid-divider-h": horizontale lijn tussen rij 1 en rij 2 (alleen voor 2x2 grid)
+     *   - "grid-divider-v": verticale lijn tussen kol 1 en kol 2
+     *   - "grid-frame": frame om alle blokken heen
+     *   - "between-blokken-v": verticale lijn tussen 2 blokken (voor 2-blok layouts)
+     */
+    _resolveAnchoredDecoration(dec, geom) {
+        if (!dec.anchor || !geom) return dec;
+        const result = { ...dec };
+
+        // Natural dimensions of decoration assets
+        const LINE_H_W = 814, LINE_H_H = 85;
+        const LINE_V_W = 74, LINE_V_H = 1131;
+        const FRAME_SQ_W = 470, FRAME_SQ_H = 604;
+        // Uniform line thickness on canvas (in pixels) — same for h and v
+        const LINE_THICKNESS_PX = 32;
+
+        switch (dec.anchor) {
+            case 'grid-divider-h': {
+                // Horizontale lijn op de gap tussen rijen, BUITEN de blokken
+                if (geom.rowGapY === undefined) return null;
+                const targetW = geom.gridRight - geom.gridLeft;
+                const scaleX = targetW / LINE_H_W;
+                // Vaste dikte-scale onafhankelijk van lengte
+                const scaleY = LINE_THICKNESS_PX / LINE_H_H;
+                const renderedH = LINE_H_H * scaleY;
+                result.x = geom.gridLeft;
+                result.y = geom.rowGapY - renderedH / 2;
+                result.scaleX = scaleX;
+                result.scaleY = scaleY;
+                result.scale = undefined;
+                break;
+            }
+            case 'grid-divider-v': {
+                if (geom.colGapX === undefined) return null;
+                const targetH = geom.gridBottom - geom.gridTop;
+                const scaleY = targetH / LINE_V_H;
+                // Vaste dikte-scale onafhankelijk van lengte
+                const scaleX = LINE_THICKNESS_PX / LINE_V_W;
+                const renderedW = LINE_V_W * scaleX;
+                result.x = geom.colGapX - renderedW / 2;
+                result.y = geom.gridTop;
+                result.scaleX = scaleX;
+                result.scaleY = scaleY;
+                result.scale = undefined;
+                break;
+            }
+            case 'grid-frame': {
+                // Frame om alle blokken met padding
+                const pad = 30;
+                const targetW = (geom.gridRight - geom.gridLeft) + pad * 2;
+                const targetH = (geom.gridBottom - geom.gridTop) + pad * 2;
+                result.x = geom.gridLeft - pad;
+                result.y = geom.gridTop - pad;
+                result.scaleX = targetW / FRAME_SQ_W;
+                result.scaleY = targetH / FRAME_SQ_H;
+                result.scale = undefined;
+                break;
+            }
+            case 'between-blokken-v': {
+                if (!geom.bloks || geom.bloks.length < 2) return null;
+                const b0 = geom.bloks[0], b1 = geom.bloks[1];
+                const midX = (b0.x + b0.w + b1.x) / 2;
+                const lineTop = Math.min(b0.y, b1.y) - 20;
+                const lineBot = Math.max(b0.y + b0.h, b1.y + b1.h) + 20;
+                const targetH = lineBot - lineTop;
+                const scaleY = targetH / LINE_V_H;
+                const scaleX = LINE_THICKNESS_PX / LINE_V_W;
+                const renderedW = LINE_V_W * scaleX;
+                result.x = midX - renderedW / 2;
+                result.y = lineTop;
+                result.scaleX = scaleX;
+                result.scaleY = scaleY;
+                result.scale = undefined;
+                break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Build a decoration element (arrow, business graphic, etc.).
+     * Decoration types:
+     *  - arrow-thick: dikke korte pijl in kleur (default left, kan flipX)
+     *  - arrow-thin: dunne korte pijl
+     *  - long-arrow: lange handgetekende pijl
+     *  - business-svg: SVG uit assets/business
+     */
+    async _buildDecoration(dec, index) {
+        let url;
+        let layerName = `Decoratie ${index + 1}`;
+
+        switch (dec.type) {
+            case 'arrow-thick': {
+                const THICK_COLORS = ['blauw', 'feloranje', 'lichtblauw', 'lichtoranje', 'wijnrood-bruin', 'zwart'];
+                const color = dec.color || THICK_COLORS[Math.floor(Math.random() * THICK_COLORS.length)];
+                url = `/assets/pijlen/korte pijl dikgedrukt links ${color}.png`;
+                layerName = `Pijl Dik ${color}`;
+                break;
+            }
+            case 'arrow-thin': {
+                const THIN_COLORS = ['blauw', 'lichtoranje', 'grijs'];
+                const color = dec.color || THIN_COLORS[Math.floor(Math.random() * THIN_COLORS.length)];
+                url = `/assets/pijlen/korte pijl ${color} links wijzend.png`;
+                layerName = `Pijl Dun ${color}`;
+                break;
+            }
+            case 'long-arrow': {
+                const LONG_COLORS = ['blauw', 'lichtoranje', 'grijs'];
+                const color = dec.color || LONG_COLORS[Math.floor(Math.random() * LONG_COLORS.length)];
+                if (color === 'blauw') {
+                    url = `/assets/pijlen/lange pijl blauw 1.png`;
+                } else {
+                    url = `/assets/pijlen/lange pijl ${color} rechts wijzend.png`;
+                }
+                layerName = `Lange Pijl ${color}`;
+                break;
+            }
+            case 'business-svg': {
+                url = `/assets/business/${dec.asset}`;
+                layerName = (dec.asset || 'svg').replace(/\.svg$/, '');
+                break;
+            }
+            case 'frame-square': {
+                url = '/assets/lijnen/frame van lijnen vierkant.png';
+                layerName = 'Frame Vierkant';
+                break;
+            }
+            case 'frame-portrait': {
+                url = '/assets/lijnen/frame van lijnen rechthoekig staand.png';
+                layerName = 'Frame Staand';
+                break;
+            }
+            case 'frame-landscape': {
+                url = '/assets/lijnen/frame van lijnen rechthoekig liggend.png';
+                layerName = 'Frame Liggend';
+                break;
+            }
+            case 'line-h': {
+                url = '/assets/lijnen/lijn horizontaal grijs.png';
+                layerName = 'Lijn Horizontaal';
+                break;
+            }
+            case 'line-v': {
+                url = '/assets/lijnen/lijn verticaal grijs.png';
+                layerName = 'Lijn Verticaal';
+                break;
+            }
+            default:
+                return null;
+        }
+
+        try {
+            const img = await loadImageAsync(url);
+            const scaleX = dec.scaleX !== undefined ? dec.scaleX : (dec.scale !== undefined ? dec.scale : 0.3);
+            const scaleY = dec.scaleY !== undefined ? dec.scaleY : (dec.scale !== undefined ? dec.scale : 0.3);
+            img.set({
+                left: dec.x || 100,
+                top: dec.y || 100,
+                scaleX,
+                scaleY,
+                angle: dec.angle || 0,
+                flipX: !!dec.flipX,
+                flipY: !!dec.flipY,
+                selectable: true,
+                evented: true,
+                layerName,
+            });
+            return img;
+        } catch (e) {
+            console.warn('Kon decoratie niet laden:', url);
+            return null;
+        }
+    }
+
+    /**
+     * Returns positioning config per layout type.
+     * Each layout places header, title, CTA, arrow differently.
+     */
+    _getIntroLayoutConfig(layout, hasBlokken) {
+        const cL = SAFE_AREA.left + 40;
+        const cW = SAFE_AREA.right - SAFE_AREA.left - 80;
+
+        const configs = {
+            // ── Default grid (calibrated from export) ──
+            'grid': {
+                header: { left: 140, top: 110, width: 810 },
+                title:  { left: 140, top: 170, width: 810, fontSize: 48 },
+                cta:    { left: 849, top: 520 },
+                arrow:  { left: 918, top: 500 },
+            },
+            // ── Sidebar (calibrated from export) ──
+            'sidebar': {
+                header: { left: 400, top: 120, width: 520, textAlign: 'left' },
+                title:  { left: 400, top: 180, width: 520, fontSize: 44, textAlign: 'left' },
+                cta:    { left: 849, top: 560 },
+                arrow:  { left: 918, top: 540 },
+            },
+            // ── Hero (calibrated from export) ──
+            'hero': {
+                header: { left: 140, top: 110, width: 810 },
+                title:  { left: 140, top: 560, width: 810, fontSize: 44 },
+                cta:    { left: 849, top: 680 },
+                arrow:  { left: 918, top: 660 },
+            },
+            // ── Diagonal ──
+            'diagonal': {
+                header: { left: 140, top: 110, width: 810 },
+                title:  { left: 140, top: 170, width: 810, fontSize: 46 },
+                cta:    { left: 849, top: 700 },
+                arrow:  { left: 918, top: 680 },
+            },
+            // ── Bottom row (calibrated from export) ──
+            'bottom-row': {
+                header: { left: 140, top: 110, width: 810 },
+                title:  { left: 140, top: 170, width: 810, fontSize: 52 },
+                cta:    { left: 873, top: 593 },
+                arrow:  { left: 918, top: 573 },
+            },
+            // ── Pyramid ──
+            'pyramid': {
+                header: { left: 140, top: 110, width: 810 },
+                title:  { left: 140, top: 170, width: 810, fontSize: 46 },
+                cta:    { left: 849, top: 700 },
+                arrow:  { left: 918, top: 680 },
+            },
+            // ── Scattered ──
+            'scattered': {
+                header: { left: 140, top: 110, width: 810 },
+                title:  { left: 140, top: 170, width: 810, fontSize: 46 },
+                cta:    { left: 849, top: 700 },
+                arrow:  { left: 918, top: 680 },
+            },
+            // ── Stack (calibrated from export) ──
+            'stack': {
+                header: { left: 380, top: 110, width: 540, textAlign: 'left' },
+                title:  { left: 380, top: 170, width: 540, fontSize: 44, textAlign: 'left' },
+                cta:    { left: 849, top: 560 },
+                arrow:  { left: 918, top: 540 },
+            },
+            // ── Overlap ──
+            'overlap': {
+                header: { left: 140, top: 110, width: 810 },
+                title:  { left: 140, top: 170, width: 810, fontSize: 46 },
+                cta:    { left: 849, top: 620 },
+                arrow:  { left: 918, top: 600 },
+            },
+        };
+
+        // Fallback for no-blokken plain intro
+        if (!hasBlokken) {
+            return {
+                header: { left: cL, top: 110, width: cW },
+                title:  { left: cL, top: 220, width: cW, fontSize: 58 },
+                cta:    { left: 849, top: 482 },
+                arrow:  { left: 945, top: 422 },
+            };
+        }
+
+        return configs[layout] || configs['grid'];
+    }
+
+    /**
+     * Create intro blokken with the specified layout style.
+     * Supports: grid, sidebar, hero, diagonal, bottom-row, pyramid, scattered, stack
+     */
+    async _createIntroBlokkenLayout(labels, layout) {
+        const objects = [];
+        const count = labels.length;
+        // Multiple tint palettes — randomly picked per render for variety
+        const PALETTES = [
+            // Blauw gradient → oranje accent
+            [[0,1.0], [0,0.8], [0,0.6], [2,0.8], [2,0.6]],
+            // Afwisselend blauw/oranje donker-licht
+            [[0,1.0], [2,0.7], [0,0.6], [2,1.0], [0,0.8]],
+            // Oranje gradient → blauw accent
+            [[2,1.0], [2,0.8], [2,0.6], [0,0.8], [0,0.6]],
+            // Blauw dominant, oranje pop
+            [[0,1.0], [0,0.7], [2,1.0], [0,0.6], [2,0.7]],
+            // Oranje dominant, blauw pop
+            [[2,1.0], [2,0.7], [0,1.0], [2,0.6], [0,0.7]],
+            // Warm→cool gradient
+            [[2,1.0], [2,0.7], [0,0.7], [0,1.0], [0,0.6]],
+            // Cool→warm gradient
+            [[0,1.0], [0,0.7], [2,0.7], [2,1.0], [2,0.6]],
+        ];
+        const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+        const colors = palette.map(t => t[0]);
+        const tints = palette.map(t => t[1]);
+
+        // Helper: bereken vertical center binnen content zone
+        const contentMidY = (ZONES.content.top + ZONES.content.bottom) / 2;
+
+        switch (layout) {
+
+            // ── SIDEBAR: blokken verticaal links gestapeld, vertical centered ──
+            case 'sidebar': {
+                const blokW = 220;
+                const blokH = 150;
+                const gap = 12;
+                const x = (SLIDE_SIZE - blokW) / 2; // horizontaal gecentreerd
+                const totalH = count * blokH + (count - 1) * gap;
+                const startY = contentMidY - totalH / 2;
+                for (let i = 0; i < count; i++) {
+                    const y = startY + i * (blokH + gap);
+                    await this._placeIntroBlok(objects, labels[i], x, y, blokW, blokH, colors[i], i, i, 0, tints[i]);
+                }
+                break;
+            }
+
+            // ── HERO: 1 groot blok centraal boven, kleinere onder ──
+            case 'hero': {
+                const heroW = 320;
+                const heroH = 228;
+                const heroX = (SLIDE_SIZE - heroW) / 2;
+                const smallW = 160;
+                const smallH = 114;
+                const smallGap = 18;
+                const smallCount = Math.max(0, count - 1);
+                const totalH = heroH + (smallCount > 0 ? 30 + smallH : 0);
+                const startY = contentMidY - totalH / 2;
+
+                // Hero blok bovenin
+                await this._placeIntroBlok(objects, labels[0], heroX, startY, heroW, heroH, colors[0], 0, 0, 0, tints[0]);
+
+                // Kleinere blokken onder, horizontaal gecentreerd
+                if (smallCount > 0) {
+                    const totalSmallW = smallCount * smallW + (smallCount - 1) * smallGap;
+                    const smallStartX = (SLIDE_SIZE - totalSmallW) / 2;
+                    const smallY = startY + heroH + 30;
+                    for (let i = 1; i < count; i++) {
+                        const x = smallStartX + (i - 1) * (smallW + smallGap);
+                        await this._placeIntroBlok(objects, labels[i], x, smallY, smallW, smallH, colors[i], i, i, 0, tints[i]);
+                    }
+                }
+                break;
+            }
+
+            // ── DIAGONAL: blokken trap-gewijs schuin, gecentreerd ──
+            case 'diagonal': {
+                const blokW = 220;
+                const blokH = 156;
+                // Bereken span: max breedte = 800, max hoogte = content zone
+                const maxX = SLIDE_SIZE - blokW - 80;  // 80px marge rechts
+                const maxY = ZONES.content.bottom - blokH;
+                const minX = 80;
+                const minY = ZONES.content.top;
+
+                const stepX = count > 1 ? Math.min(160, (maxX - minX) / (count - 1)) : 0;
+                const stepY = count > 1 ? Math.min(120, (maxY - minY) / (count - 1)) : 0;
+
+                // Centreer de diagonaal binnen de content zone
+                const totalSpanX = (count - 1) * stepX;
+                const totalSpanY = (count - 1) * stepY;
+                const startX = (SLIDE_SIZE - totalSpanX - blokW) / 2;
+                const startY = contentMidY - (totalSpanY + blokH) / 2;
+
+                for (let i = 0; i < count; i++) {
+                    const x = startX + i * stepX;
+                    const y = startY + i * stepY;
+                    await this._placeIntroBlok(objects, labels[i], x, y, blokW, blokH, colors[i], i, i, 0, tints[i]);
+                }
+                break;
+            }
+
+            // ── BOTTOM ROW: blokken naast elkaar in onderste deel content zone ──
+            case 'bottom-row': {
+                const gap = 18;
+                const maxW = 880;
+                const blokW = Math.min(210, (maxW - (count - 1) * gap) / count);
+                const blokH = Math.round(blokW * 0.71);
+                const totalW = count * blokW + (count - 1) * gap;
+                const startX = (SLIDE_SIZE - totalW) / 2;
+                // Plaats in onderste 60% van content zone
+                const y = ZONES.content.top + (ZONES.content.bottom - ZONES.content.top) * 0.55 - blokH / 2;
+                for (let i = 0; i < count; i++) {
+                    const x = startX + i * (blokW + gap);
+                    await this._placeIntroBlok(objects, labels[i], x, y, blokW, blokH, colors[i], i, i, 0, tints[i]);
+                }
+                break;
+            }
+
+            // ── PYRAMID: 1 of 2 boven, rest eronder, alles gecentreerd ──
+            case 'pyramid': {
+                const blokW = 250;
+                const blokH = 178;
+                const gap = 20;
+                const verticalGap = 30;
+
+                if (count === 3) {
+                    // 1 boven, 2 onder
+                    const totalH = blokH * 2 + verticalGap;
+                    const startY = contentMidY - totalH / 2;
+                    const topX = (SLIDE_SIZE - blokW) / 2;
+                    await this._placeIntroBlok(objects, labels[0], topX, startY, blokW, blokH, colors[0], 0, 0, 0, tints[0]);
+                    const bottomW = 2 * blokW + gap;
+                    const bottomX = (SLIDE_SIZE - bottomW) / 2;
+                    for (let i = 1; i < 3; i++) {
+                        await this._placeIntroBlok(objects, labels[i], bottomX + (i - 1) * (blokW + gap), startY + blokH + verticalGap, blokW, blokH, colors[i], i, i, 0, tints[i]);
+                    }
+                } else if (count === 4) {
+                    // 1 groot boven, 3 kleiner onder
+                    const smallW = 200;
+                    const smallH = 142;
+                    const totalH = blokH + verticalGap + smallH;
+                    const startY = contentMidY - totalH / 2;
+                    const topX = (SLIDE_SIZE - blokW) / 2;
+                    await this._placeIntroBlok(objects, labels[0], topX, startY, blokW, blokH, colors[0], 0, 0, 0, tints[0]);
+                    const bottomW = 3 * smallW + 2 * gap;
+                    const bottomX = (SLIDE_SIZE - bottomW) / 2;
+                    for (let i = 1; i < 4; i++) {
+                        await this._placeIntroBlok(objects, labels[i], bottomX + (i - 1) * (smallW + gap), startY + blokH + verticalGap, smallW, smallH, colors[i], i, i, 0, tints[i]);
+                    }
+                } else {
+                    // 2 of meer naast elkaar, gecentreerd
+                    const totalW = count * blokW + (count - 1) * gap;
+                    const startX = (SLIDE_SIZE - totalW) / 2;
+                    const startY = contentMidY - blokH / 2;
+                    for (let i = 0; i < count; i++) {
+                        await this._placeIntroBlok(objects, labels[i], startX + i * (blokW + gap), startY, blokW, blokH, colors[i], i, i, 0, tints[i]);
+                    }
+                }
+                break;
+            }
+
+            // ── SCATTERED: organische posities binnen content zone, gecentreerd ──
+            case 'scattered': {
+                // Posities zijn relatief tot content zone bounds — geen overlap
+                const cTop = ZONES.content.top;
+                const cBot = ZONES.content.bottom;
+                const cMid = contentMidY;
+
+                const placements5 = [
+                    { rx: 0.13, ry: 0.05, w: 230, h: 164, rot: -3 },
+                    { rx: 0.50, ry: 0.02, w: 220, h: 156, rot: 2 },
+                    { rx: 0.13, ry: 0.45, w: 220, h: 156, rot: 3 },
+                    { rx: 0.45, ry: 0.45, w: 220, h: 156, rot: -2 },
+                    { rx: 0.18, ry: 0.85, w: 210, h: 150, rot: 1 },
+                ];
+                const placements4 = [
+                    { rx: 0.13, ry: 0.05, w: 240, h: 170, rot: -4 },
+                    { rx: 0.50, ry: 0.02, w: 230, h: 164, rot: 3 },
+                    { rx: 0.18, ry: 0.55, w: 230, h: 164, rot: 2 },
+                    { rx: 0.50, ry: 0.55, w: 220, h: 156, rot: -3 },
+                ];
+                const pl = count >= 5 ? placements5 : placements4;
+                const zoneH = cBot - cTop;
+                for (let i = 0; i < count; i++) {
+                    const p = pl[i % pl.length];
+                    const x = p.rx * SLIDE_SIZE;
+                    const y = cTop + p.ry * zoneH;
+                    await this._placeIntroBlok(objects, labels[i], x, y, p.w, p.h, colors[i], i, i, p.rot, tints[i]);
+                }
+                break;
+            }
+
+            // ── STACK: verticaal onder elkaar links, vertical centered ──
+            case 'stack': {
+                const blokW = 220;
+                const blokH = 130;
+                const gap = 12;
+                const x = 130;
+                const totalH = count * blokH + (count - 1) * gap;
+                const startY = contentMidY - totalH / 2;
+                for (let i = 0; i < count; i++) {
+                    const y = startY + i * (blokH + gap);
+                    await this._placeIntroBlok(objects, labels[i], x, y, blokW, blokH, colors[i], i, i, 0, tints[i]);
+                }
+                break;
+            }
+
+            // ── OVERLAP: horizontale ketting, gecentreerd, vertical centered ──
+            case 'overlap': {
+                const overlapColors = colors;
+                const overlapTints = tints;
+                const blokW = 220;
+                const blokH = 157;
+                const step = 156;
+                const totalW = blokW + (count - 1) * step;
+                const startX = (SLIDE_SIZE - totalW) / 2;
+                const y = contentMidY - blokH / 2;
+                for (let i = 0; i < count; i++) {
+                    const x = startX + i * step;
+                    const ci = overlapColors[i % overlapColors.length];
+                    const ot = overlapTints[i % overlapTints.length] * 0.9;
+                    await this._placeIntroBlok(objects, labels[i], x, y, blokW, blokH, ci, i, i, 0, ot);
+                }
+                break;
+            }
+
+            // ── DEFAULT GRID: 2x2 of horizontal row ──
+            case 'grid':
+            default: {
+                if (count === 4) {
+                    // 2x2 grid — horizontaal en verticaal gecentreerd in content zone
+                    const blokW = 230;
+                    const blokH = 164;
+                    const gap = 20;
+                    const gridW = 2 * blokW + gap;
+                    const gridH = 2 * blokH + gap;
+                    const startX = (SLIDE_SIZE - gridW) / 2;
+                    const contentMid = (ZONES.content.top + ZONES.content.bottom) / 2;
+                    const startY = contentMid - gridH / 2;
+                    const grid = [
+                        { x: startX,              y: startY },
+                        { x: startX + blokW + gap, y: startY },
+                        { x: startX,              y: startY + blokH + gap },
+                        { x: startX + blokW + gap, y: startY + blokH + gap },
+                    ];
+                    for (let i = 0; i < 4; i++) {
+                        await this._placeIntroBlok(objects, labels[i], grid[i].x, grid[i].y, blokW, blokH, colors[i], i, i, 0, tints[i]);
+                    }
+                } else {
+                    // Horizontale rij — gecentreerd
+                    const blokW = 230;
+                    const blokH = 164;
+                    const gap = 20;
+                    const totalWidth = count * blokW + (count - 1) * gap;
+                    const startX = (SLIDE_SIZE - totalWidth) / 2;
+                    const contentMid = (ZONES.content.top + ZONES.content.bottom) / 2;
+                    const startY = contentMid - blokH / 2;
+                    for (let i = 0; i < count; i++) {
+                        const x = startX + i * (blokW + gap);
+                        await this._placeIntroBlok(objects, labels[i], x, startY, blokW, blokH, colors[i], i, i, 0, tints[i]);
+                    }
+                }
+                break;
+            }
+        }
+
+        return objects;
+    }
+
+    /**
+     * Place a single intro blok (image + text label centered).
+     * Text auto-shrinks for longer words. Optional rotation.
+     */
+    async _placeIntroBlok(objects, label, x, y, targetW, targetH, colorIndex, variant, index, rotation, opacity) {
+        // Track the actual rendered dimensions for centering
+        let renderedW = targetW;
+        let renderedH = targetH;
+        const blokOpacity = opacity || 1;
+
+        try {
+            const img = await loadImageAsync(getBlokImagePath(colorIndex, variant));
+            const scaleX = targetW / img.width;
+            const scaleY = targetH / img.height;
+            const scale = Math.min(scaleX, scaleY);
+            renderedW = img.width * scale;
+            renderedH = img.height * scale;
+            img.set({
+                left: x,
+                top: y,
+                scaleX: scale,
+                scaleY: scale,
+                angle: rotation || 0,
+                opacity: blokOpacity,
+                selectable: true,
+                evented: true,
+                layerName: `Intro Blok ${index + 1}`,
+            });
+            objects.push(img);
+        } catch (e) {
+            const fallbackColors = [BRAND.secondary, BRAND.accent, BRAND.grey3, BRAND.secondary];
+            objects.push(new fabric.Rect({
+                left: x,
+                top: y,
+                width: targetW,
+                height: targetH,
+                rx: 20,
+                ry: 20,
+                fill: fallbackColors[colorIndex % fallbackColors.length],
+                angle: rotation || 0,
+                selectable: true,
+                layerName: `Intro Blok ${index + 1}`,
+            }));
+        }
+
+        // Auto-size font based on label length AND blok size
+        let fontSize = 24;
+        if (label.length > 10) fontSize = 16;
+        else if (label.length > 7) fontSize = 18;
+        else if (label.length > 5) fontSize = 20;
+        // Scale font with blok size
+        if (renderedW >= 250) fontSize += 4;
+        else if (renderedW <= 130) fontSize -= 2;
+        else if (renderedW <= 100) fontSize -= 4;
+
+        // Center text exactly on the actual rendered blok dimensions
+        const centerX = x + renderedW / 2;
+        const centerY = y + renderedH / 2;
+
+        objects.push(new fabric.Text(label, {
+            left: centerX,
+            top: centerY,
+            fontSize: fontSize,
+            fontFamily: FONT_MAIN,
+            fontWeight: '700',
+            fontStyle: 'italic',
+            fill: '#FFFFFF',
+            textAlign: 'center',
+            originX: 'center',
+            originY: 'center',
+            angle: rotation || 0,
+            selectable: true,
+            evented: true,
+            layerName: `Intro Blok ${index + 1} Tekst`,
+        }));
     }
 
     async _buildContentContent(slide) {
@@ -712,7 +1958,7 @@ class SlideCanvasEditor {
         return objects;
     }
 
-    _buildEngagementContent(slide) {
+    async _buildEngagementContent(slide) {
         const objects = [];
         const contentLeft = SAFE_AREA.left + 40;
         const contentWidth = SAFE_AREA.right - SAFE_AREA.left - 80;
@@ -776,18 +2022,47 @@ class SlideCanvasEditor {
             layerName: 'Like & Comment',
         }));
 
-        // Arrow down (calibrated)
-        objects.push(new fabric.Text('\u2193', {
-            left: 312,
-            top: 834,
-            fontSize: 55,
-            scaleX: 1.815,
-            scaleY: 1.815,
-            fontWeight: '700',
-            fill: BRAND.primary,
-            selectable: true,
-            layerName: 'Pijl',
-        }));
+        // Arrow down — pijlpunt eindigt EXACT op de "Like & comment" tekst (rechtsboven van de tekst)
+        try {
+            const engArrow = await loadImageAsync('/assets/pijlen/korte pijl dikgedrukt links zwart.png');
+            const TIP_NATIVE = { x: 15, y: 88 };
+            const PNG_W = 375, PNG_H = 177;
+            const SCALE = 0.18;
+            const ANGLE = -90; // wijst naar beneden (na geen flip → tip wijst nu omlaag)
+            // Tip moet eindigen ongeveer bij top-rechts van "Like & comment" tekst (rond 295, 850)
+            const TIP_ANCHOR = { x: 295, y: 850 };
+
+            const tipLocalX = TIP_NATIVE.x; // geen flip
+            const tipLocalY = TIP_NATIVE.y;
+
+            const props = this._positionAtTipAnchor(
+                PNG_W, PNG_H, SCALE, SCALE, ANGLE, tipLocalX, tipLocalY, TIP_ANCHOR
+            );
+
+            engArrow.set({
+                left: props.left,
+                top: props.top,
+                scaleX: SCALE,
+                scaleY: SCALE,
+                angle: ANGLE,
+                selectable: true,
+                evented: true,
+                layerName: 'Pijl',
+            });
+            objects.push(engArrow);
+        } catch (e) {
+            objects.push(new fabric.Text('\u2193', {
+                left: 312,
+                top: 834,
+                fontSize: 55,
+                scaleX: 1.815,
+                scaleY: 1.815,
+                fontWeight: '700',
+                fill: BRAND.primary,
+                selectable: true,
+                layerName: 'Pijl',
+            }));
+        }
 
         return objects;
     }
@@ -968,26 +2243,31 @@ class SlideCanvasEditor {
      * Skips non-content layers like Papier.
      */
     _clampToSafeArea(obj) {
-        if (!obj || obj.layerName === 'Papier') return;
+        if (!obj || obj.layerLocked) return;
 
-        const bound = obj.getBoundingRect(true);
+        // Use lightweight position check instead of expensive getBoundingRect
+        const w = (obj.width || 0) * (obj.scaleX || 1);
+        const h = (obj.height || 0) * (obj.scaleY || 1);
 
-        // Clamp left edge
-        if (bound.left < SAFE_AREA.left) {
-            obj.set('left', obj.left + (SAFE_AREA.left - bound.left));
-        }
-        // Clamp top edge
-        if (bound.top < SAFE_AREA.top) {
-            obj.set('top', obj.top + (SAFE_AREA.top - bound.top));
-        }
-        // Clamp right edge
-        if (bound.left + bound.width > SAFE_AREA.right) {
-            obj.set('left', obj.left - (bound.left + bound.width - SAFE_AREA.right));
-        }
-        // Clamp bottom edge
-        if (bound.top + bound.height > SAFE_AREA.bottom) {
-            obj.set('top', obj.top - (bound.top + bound.height - SAFE_AREA.bottom));
-        }
+        // Skip clamping for objects larger than safe area (blokken, paper)
+        if (w > (SAFE_AREA.right - SAFE_AREA.left) || h > (SAFE_AREA.bottom - SAFE_AREA.top)) return;
+
+        let left = obj.left;
+        let top = obj.top;
+
+        // Account for originX/originY center
+        const offX = obj.originX === 'center' ? w / 2 : 0;
+        const offY = obj.originY === 'center' ? h / 2 : 0;
+
+        const objLeft = left - offX;
+        const objTop = top - offY;
+
+        if (objLeft < SAFE_AREA.left) left = SAFE_AREA.left + offX;
+        if (objTop < SAFE_AREA.top) top = SAFE_AREA.top + offY;
+        if (objLeft + w > SAFE_AREA.right) left = SAFE_AREA.right - w + offX;
+        if (objTop + h > SAFE_AREA.bottom) top = SAFE_AREA.bottom - h + offY;
+
+        obj.set({ left, top });
     }
 
     // ── Slide Tabs ──────────────────────────────────────────────────

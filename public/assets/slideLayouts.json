@@ -1,0 +1,372 @@
+{
+  "_comment": "Exact positie-overrides per preset en slide. Wordt door canvas-editor.js geladen na de standaard layout, waardoor elementen op exact deze plek terechtkomen. Format: presets[id].slides[index].elements[name] = { left, top, scaleX, scaleY, angle, flipX, fontSize, opacity }",
+  "presets": {
+    "trends-observatie": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 183, "top": 312, "scaleX": 0.3939, "scaleY": 0.3939 },
+            "Intro Blok 1 Tekst": { "left": 294, "top": 387, "fontSize": 24 },
+            "Intro Blok 2": { "left": 350, "top": 418, "scaleX": 0.3939, "scaleY": 0.3939, "opacity": 0.8 },
+            "Intro Blok 2 Tekst": { "left": 460, "top": 495, "fontSize": 24 },
+            "Intro Blok 3": { "left": 511, "top": 517, "scaleX": 0.378, "scaleY": 0.378, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 620, "top": 591, "fontSize": 20 },
+            "Intro Blok 4": { "left": 679, "top": 616, "scaleX": 0.3939, "scaleY": 0.3939, "opacity": 0.8 },
+            "Intro Blok 4 Tekst": { "left": 789, "top": 694, "fontSize": 18 },
+            "CTA": { "left": 834, "top": 444, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true },
+            "Lange Pijl blauw": { "left": 143, "top": 424, "scaleX": 0.3441, "scaleY": 0.3441, "angle": 32.3 }
+          }
+        }
+      ]
+    },
+    "mini-handleiding": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 415, "top": 352, "scaleX": 0.4495, "scaleY": 0.4495 },
+            "Intro Blok 1 Tekst": { "left": 540, "top": 441, "fontSize": 20 },
+            "Intro Blok 2": { "left": 280, "top": 560, "scaleX": 0.4496, "scaleY": 0.4496, "opacity": 0.8 },
+            "Intro Blok 2 Tekst": { "left": 405, "top": 648, "fontSize": 24 },
+            "Intro Blok 3": { "left": 550, "top": 560, "scaleX": 0.4496, "scaleY": 0.4496, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 675, "top": 648, "fontSize": 24 },
+            "CTA": { "left": 817, "top": 500, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true },
+            "widea-gouden-driehoek": { "left": 80, "top": 700, "scaleX": 0.18, "scaleY": 0.18 }
+          }
+        }
+      ]
+    },
+    "ondernemers-tip": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 300, "top": 371, "scaleX": 0.4137, "scaleY": 0.4137 },
+            "Intro Blok 1 Tekst": { "left": 415, "top": 453, "fontSize": 24 },
+            "Intro Blok 2": { "left": 550, "top": 371, "scaleX": 0.4137, "scaleY": 0.4137, "opacity": 0.8 },
+            "Intro Blok 2 Tekst": { "left": 665, "top": 453, "fontSize": 24 },
+            "Intro Blok 3": { "left": 300, "top": 555, "scaleX": 0.3952, "scaleY": 0.3952, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 415, "top": 633, "fontSize": 20 },
+            "Intro Blok 4": { "left": 550, "top": 555, "scaleX": 0.4137, "scaleY": 0.4137, "opacity": 0.8 },
+            "Intro Blok 4 Tekst": { "left": 665, "top": 637, "fontSize": 18 },
+            "CTA": { "left": 831, "top": 441, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true }
+          }
+        }
+      ]
+    },
+    "strategisch-advies": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 380, "top": 359, "scaleX": 0.5755, "scaleY": 0.5755 },
+            "Intro Blok 1 Tekst": { "left": 540, "top": 473, "fontSize": 28 },
+            "Intro Blok 2": { "left": 282, "top": 617, "scaleX": 0.2878, "scaleY": 0.2878, "opacity": 0.7 },
+            "Intro Blok 2 Tekst": { "left": 362, "top": 673, "fontSize": 24 },
+            "Intro Blok 3": { "left": 460, "top": 617, "scaleX": 0.2749, "scaleY": 0.2749 },
+            "Intro Blok 3 Tekst": { "left": 540, "top": 672, "fontSize": 20 },
+            "Intro Blok 4": { "left": 638, "top": 617, "scaleX": 0.2878, "scaleY": 0.2878, "opacity": 0.6 },
+            "Intro Blok 4 Tekst": { "left": 718, "top": 674, "fontSize": 18 },
+            "CTA": { "left": 892, "top": 566, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 937, "top": 556, "scaleX": 0.213, "scaleY": 0.213, "angle": 314, "flipX": true },
+            "Frame Liggend": { "left": 147, "top": 279, "scaleX": 0.8716, "scaleY": 0.8716 },
+            "widea-raket-rood": { "left": 720, "top": 720, "scaleX": 0.2, "scaleY": 0.2 }
+          }
+        }
+      ]
+    },
+    "swot-analyse": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 216, "top": 335, "scaleX": 0.5667, "scaleY": 0.5667 },
+            "Intro Blok 1 Tekst": { "left": 373, "top": 448, "scaleX": 1.3699, "scaleY": 1.3699, "fontSize": 18 },
+            "Intro Blok 2": { "left": 558, "top": 335, "scaleX": 0.5667, "scaleY": 0.5667, "opacity": 0.7 },
+            "Intro Blok 2 Tekst": { "left": 716, "top": 446, "scaleX": 1.3699, "scaleY": 1.3699, "fontSize": 20 },
+            "Intro Blok 3": { "left": 216, "top": 587, "scaleX": 0.5414, "scaleY": 0.5414, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 373, "top": 695, "scaleX": 1.3699, "scaleY": 1.3699, "fontSize": 20 },
+            "Intro Blok 4": { "left": 558, "top": 587, "scaleX": 0.5667, "scaleY": 0.5667 },
+            "Intro Blok 4 Tekst": { "left": 716, "top": 700, "scaleX": 1.3699, "scaleY": 1.3699, "fontSize": 16 },
+            "CTA": { "left": 877, "top": 566, "scaleX": 1.3465, "scaleY": 1.3465, "fontSize": 32 },
+            "CTA Pijl": { "left": 929, "top": 551, "scaleX": 0.213, "scaleY": 0.213, "angle": 323.8, "flipX": true },
+            "Lijn Horizontaal": { "left": 216, "top": 552, "scaleX": 0.8078, "scaleY": 0.5157 },
+            "Lijn Verticaal": { "left": 523, "top": 335, "scaleX": 0.5924, "scaleY": 0.4215 }
+          }
+        }
+      ]
+    },
+    "persoonlijk-verhaal": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 380, "top": 359, "scaleX": 0.5755, "scaleY": 0.5755 },
+            "Intro Blok 1 Tekst": { "left": 540, "top": 473, "fontSize": 28 },
+            "Intro Blok 2": { "left": 371, "top": 617, "scaleX": 0.2878, "scaleY": 0.2878, "opacity": 0.7 },
+            "Intro Blok 2 Tekst": { "left": 451, "top": 673, "fontSize": 24 },
+            "Intro Blok 3": { "left": 549, "top": 617, "scaleX": 0.2749, "scaleY": 0.2749, "opacity": 0.7 },
+            "Intro Blok 3 Tekst": { "left": 629, "top": 672, "fontSize": 24 },
+            "CTA": { "left": 817, "top": 492, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true },
+            "Frame Staand": { "left": 327, "top": 302, "scaleX": 0.5067, "scaleY": 0.5067 },
+            "widea-raketlamp-blauw": { "left": 700, "top": 760, "scaleX": 0.18, "scaleY": 0.18 }
+          }
+        }
+      ]
+    },
+    "reflectie-kort": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 175, "top": 463, "scaleX": 0.4137, "scaleY": 0.4137 },
+            "Intro Blok 1 Tekst": { "left": 290, "top": 545, "fontSize": 24 },
+            "Intro Blok 2": { "left": 425, "top": 463, "scaleX": 0.4137, "scaleY": 0.4137, "opacity": 0.7 },
+            "Intro Blok 2 Tekst": { "left": 540, "top": 544, "fontSize": 24 },
+            "Intro Blok 3": { "left": 675, "top": 463, "scaleX": 0.3952, "scaleY": 0.3952, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 790, "top": 541, "fontSize": 24 },
+            "CTA": { "left": 890, "top": 582, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 959, "top": 579, "scaleX": 0.213, "scaleY": 0.213, "angle": 287, "flipX": true }
+          }
+        }
+      ]
+    },
+    "tegenstelling": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 352, "top": 467, "scaleX": 0.3957, "scaleY": 0.3957, "opacity": 0.9 },
+            "Intro Blok 1 Tekst": { "left": 462, "top": 545, "fontSize": 24 },
+            "Intro Blok 2": { "left": 508, "top": 467, "scaleX": 0.3957, "scaleY": 0.3957, "opacity": 0.72 },
+            "Intro Blok 2 Tekst": { "left": 618, "top": 545, "fontSize": 24 },
+            "CTA": { "left": 823, "top": 492, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true }
+          }
+        }
+      ]
+    },
+    "reflectie-diep": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 451, "top": 346, "scaleX": 0.3788, "scaleY": 0.3788 },
+            "Intro Blok 1 Tekst": { "left": 557, "top": 421, "fontSize": 24 },
+            "Intro Blok 2": { "left": 451, "top": 508, "scaleX": 0.3836, "scaleY": 0.3836, "opacity": 0.7 },
+            "Intro Blok 2 Tekst": { "left": 558, "top": 583, "fontSize": 24 },
+            "Intro Blok 3": { "left": 451, "top": 670, "scaleX": 0.3778, "scaleY": 0.3778 },
+            "Intro Blok 3 Tekst": { "left": 561, "top": 745, "fontSize": 24 },
+            "CTA": { "left": 817, "top": 491, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true }
+          }
+        }
+      ]
+    },
+    "vier-stappen": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 415, "top": 370, "scaleX": 0.4495, "scaleY": 0.4495 },
+            "Intro Blok 1 Tekst": { "left": 540, "top": 459, "fontSize": 20 },
+            "Intro Blok 2": { "left": 220, "top": 578, "scaleX": 0.3597, "scaleY": 0.3597, "opacity": 0.8 },
+            "Intro Blok 2 Tekst": { "left": 320, "top": 648, "fontSize": 20 },
+            "Intro Blok 3": { "left": 440, "top": 578, "scaleX": 0.3597, "scaleY": 0.3597, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 540, "top": 649, "fontSize": 20 },
+            "Intro Blok 4": { "left": 660, "top": 578, "scaleX": 0.3586, "scaleY": 0.3586, "opacity": 0.8 },
+            "Intro Blok 4 Tekst": { "left": 760, "top": 649, "fontSize": 20 },
+            "CTA": { "left": 803, "top": 386, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 935, "top": 450, "scaleX": 0.213, "scaleY": 0.213, "angle": 38.4, "flipX": true }
+          }
+        }
+      ]
+    },
+    "inzicht-uit-fout": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 380, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 380, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 496, "top": 336, "scaleX": 0.3283, "scaleY": 0.3283 },
+            "Intro Blok 1 Tekst": { "left": 587, "top": 401, "fontSize": 24 },
+            "Intro Blok 2": { "left": 496, "top": 478, "scaleX": 0.3325, "scaleY": 0.3325, "opacity": 0.8 },
+            "Intro Blok 2 Tekst": { "left": 588, "top": 543, "fontSize": 24 },
+            "Intro Blok 3": { "left": 496, "top": 620, "scaleX": 0.3316, "scaleY": 0.3316, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 588, "top": 685, "fontSize": 24 },
+            "CTA": { "left": 810, "top": 472, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 923, "top": 531, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true },
+            "Lange Pijl lichtoranje": { "left": 282, "top": 780, "scaleX": 0.3, "scaleY": 0.3 }
+          }
+        }
+      ]
+    },
+    "confrontatie": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 207, "top": 493, "scaleX": 0.3763, "scaleY": 0.3763 },
+            "Intro Blok 1 Tekst": { "left": 312, "top": 568, "fontSize": 24 },
+            "Intro Blok 2": { "left": 435, "top": 493, "scaleX": 0.3763, "scaleY": 0.3763, "opacity": 0.7 },
+            "Intro Blok 2 Tekst": { "left": 540, "top": 568, "fontSize": 24 },
+            "Intro Blok 3": { "left": 663, "top": 493, "scaleX": 0.3777, "scaleY": 0.3777 },
+            "Intro Blok 3 Tekst": { "left": 768, "top": 567, "fontSize": 24 },
+            "CTA": { "left": 900, "top": 552, "fontSize": 32, "scaleX": 1.1509, "scaleY": 1.1509 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true }
+          }
+        }
+      ]
+    },
+    "vijf-stappen": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 109, "top": 531, "scaleX": 0.3957, "scaleY": 0.3957, "opacity": 0.9 },
+            "Intro Blok 1 Tekst": { "left": 219, "top": 610, "fontSize": 20 },
+            "Intro Blok 2": { "left": 265, "top": 531, "scaleX": 0.3957, "scaleY": 0.3957, "opacity": 0.63 },
+            "Intro Blok 2 Tekst": { "left": 375, "top": 609, "fontSize": 20 },
+            "Intro Blok 3": { "left": 421, "top": 531, "scaleX": 0.378, "scaleY": 0.378, "opacity": 0.9 },
+            "Intro Blok 3 Tekst": { "left": 531, "top": 606, "fontSize": 20 },
+            "Intro Blok 4": { "left": 577, "top": 531, "scaleX": 0.3957, "scaleY": 0.3957, "opacity": 0.54 },
+            "Intro Blok 4 Tekst": { "left": 687, "top": 610, "fontSize": 20 },
+            "Intro Blok 5": { "left": 733, "top": 531, "scaleX": 0.3957, "scaleY": 0.3957, "opacity": 0.63 },
+            "Intro Blok 5 Tekst": { "left": 843, "top": 610, "fontSize": 20 },
+            "CTA": { "left": 820, "top": 360, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 941, "top": 439, "scaleX": 0.213, "scaleY": 0.2439, "angle": 36.8, "flipX": true },
+            "Lange Pijl blauw": { "left": 100, "top": 700, "scaleX": 0.42, "scaleY": 0.42 }
+          }
+        }
+      ]
+    },
+    "vraag-stelling": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 430, "top": 308, "scaleX": 0.3788, "scaleY": 0.3788 },
+            "Intro Blok 1 Tekst": { "left": 535, "top": 383, "fontSize": 24 },
+            "Intro Blok 2": { "left": 430, "top": 470, "scaleX": 0.3836, "scaleY": 0.3836, "opacity": 0.7 },
+            "Intro Blok 2 Tekst": { "left": 537, "top": 545, "fontSize": 24 },
+            "Intro Blok 3": { "left": 430, "top": 632, "scaleX": 0.3778, "scaleY": 0.3778, "opacity": 0.7 },
+            "Intro Blok 3 Tekst": { "left": 540, "top": 707, "fontSize": 24 },
+            "CTA": { "left": 818, "top": 457, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true }
+          }
+        }
+      ]
+    },
+    "voor-na": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 352, "top": 467, "scaleX": 0.3957, "scaleY": 0.3957, "opacity": 0.9 },
+            "Intro Blok 1 Tekst": { "left": 462, "top": 545, "fontSize": 24 },
+            "Intro Blok 2": { "left": 508, "top": 467, "scaleX": 0.3957, "scaleY": 0.3957, "opacity": 0.63 },
+            "Intro Blok 2 Tekst": { "left": 618, "top": 544, "fontSize": 24 },
+            "CTA": { "left": 821, "top": 448, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 927, "top": 537, "scaleX": 0.213, "scaleY": 0.213, "angle": -25, "flipX": true }
+          }
+        }
+      ]
+    },
+    "mythbusting": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 140, "top": 343, "scaleX": 0.4293, "scaleY": 0.4293, "angle": -4 },
+            "Intro Blok 1 Tekst": { "left": 260, "top": 428, "angle": -4, "fontSize": 20 },
+            "Intro Blok 2": { "left": 540, "top": 329, "scaleX": 0.4137, "scaleY": 0.4137, "angle": 3, "opacity": 0.7 },
+            "Intro Blok 2 Tekst": { "left": 655, "top": 410, "angle": 3, "fontSize": 20 },
+            "Intro Blok 3": { "left": 194, "top": 568, "scaleX": 0.3952, "scaleY": 0.3952, "angle": 2, "opacity": 0.7 },
+            "Intro Blok 3 Tekst": { "left": 309, "top": 646, "angle": 2, "fontSize": 20 },
+            "CTA": { "left": 854, "top": 565, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 928, "top": 545, "scaleX": 0.213, "scaleY": 0.213, "angle": 324, "flipX": true }
+          }
+        }
+      ]
+    },
+    "drie-lessen": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 142, "top": 171, "fontSize": 48 },
+            "Intro Blok 1": { "left": 175, "top": 463, "scaleX": 0.4137, "scaleY": 0.4137 },
+            "Intro Blok 1 Tekst": { "left": 290, "top": 545, "fontSize": 24 },
+            "Intro Blok 2": { "left": 425, "top": 463, "scaleX": 0.4137, "scaleY": 0.4137, "opacity": 0.8 },
+            "Intro Blok 2 Tekst": { "left": 540, "top": 545, "fontSize": 24 },
+            "Intro Blok 3": { "left": 675, "top": 463, "scaleX": 0.3952, "scaleY": 0.3952, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 790, "top": 541, "fontSize": 24 },
+            "CTA": { "left": 872, "top": 565, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 935, "top": 557, "scaleX": 0.213, "scaleY": 0.213, "angle": 318.2, "flipX": true }
+          }
+        }
+      ]
+    },
+    "vijf-lessen": {
+      "slides": [
+        {
+          "slideIndex": 0,
+          "elements": {
+            "Header": { "left": 140, "top": 95, "fontSize": 28 },
+            "Titel": { "left": 140, "top": 165, "fontSize": 48 },
+            "Intro Blok 1": { "left": 114, "top": 582, "scaleX": 0.2904, "scaleY": 0.2904 },
+            "Intro Blok 1 Tekst": { "left": 195, "top": 640, "fontSize": 24 },
+            "Intro Blok 2": { "left": 294, "top": 582, "scaleX": 0.2904, "scaleY": 0.2904, "opacity": 0.8 },
+            "Intro Blok 2 Tekst": { "left": 374, "top": 640, "fontSize": 24 },
+            "Intro Blok 3": { "left": 473, "top": 582, "scaleX": 0.2777, "scaleY": 0.2777, "opacity": 0.6 },
+            "Intro Blok 3 Tekst": { "left": 554, "top": 637, "fontSize": 24 },
+            "Intro Blok 4": { "left": 653, "top": 582, "scaleX": 0.2904, "scaleY": 0.2904, "opacity": 0.8 },
+            "Intro Blok 4 Tekst": { "left": 734, "top": 640, "fontSize": 24 },
+            "Intro Blok 5": { "left": 833, "top": 582, "scaleX": 0.2906, "scaleY": 0.2906, "opacity": 0.6 },
+            "Intro Blok 5 Tekst": { "left": 913, "top": 639, "fontSize": 24 },
+            "CTA": { "left": 806, "top": 393, "fontSize": 32, "scaleX": 1.477, "scaleY": 1.477 },
+            "CTA Pijl": { "left": 943, "top": 442, "scaleX": 0.213, "scaleY": 0.213, "angle": 35.2, "flipX": true, "flipY": true },
+            "Lange Pijl lichtoranje": { "left": 274, "top": 742, "scaleX": 0.28, "scaleY": 0.28 }
+          }
+        }
+      ]
+    }
+  }
+}

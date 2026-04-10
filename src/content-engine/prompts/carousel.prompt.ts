@@ -28,13 +28,12 @@ export function buildCarouselPrompt(topic: string, kennisbank: string): string {
         **ONDERWERP:** "${topic}"
 
         **SLIDE REGELS:**
-        - Maak tussen 4 en 7 slides totaal (NOOIT meer, NOOIT minder).
+        - Maak tussen 5 en 7 slides totaal (NOOIT meer, NOOIT minder).
         - De EERSTE slide is altijd type "intro".
         - De LAATSTE slide is altijd type "outro".
-        - Daartussen: een mix van "content" en "engagement" slides.
-        - Simpele onderwerpen: 4-5 slides. Complexe onderwerpen: 6-7 slides.
-        - Elke content slide maakt EEN helder punt. Geen opvulling.
-        - Minimaal EEN "engagement" slide voor de outro.
+        - Daartussen: minimaal 3 "content" slides en minimaal 1 "engagement" slide.
+        - Elke content slide maakt EEN helder punt, maar werk dat punt goed uit met voorbeelden en reflectie.
+        - De totale carousel moet substantieel aanvoelen — geen dunne slidedeck maar een verhaal dat ergens over gaat.
 
         **VERPLICHTE STRUCTUUR (ALLEEN JSON):**
         Geef ALLEEN valide JSON terug. Bepaal het aantal slides op basis van het onderwerp.
@@ -49,10 +48,21 @@ export function buildCarouselPrompt(topic: string, kennisbank: string): string {
             "content": {
                 "subtitle": "Korte ondertitel zoals '~~~ DE VRAAG VAN VANDAAG ~~~'",
                 "title": "Een prikkelende vraag of stelling (max 10 woorden, geen grof taalgebruik)",
-                "cta": "Swipe voor het antwoord"
+                "cta": "Swipe voor het antwoord",
+                "blokken": ["Woord1", "Woord2", "Woord3"]
             },
             "visuals": { "style": "cover" }
         }
+        INTRO BLOKKEN REGELS:
+        - "blokken" op de intro slide is VERPLICHT — het maakt de slide visueel aantrekkelijk.
+        - Kies 2, 3 of 4 woorden die PASSEN bij het onderwerp. Voorbeelden:
+          * SWOT-onderwerp: ["Sterktes", "Zwaktes", "Kansen", "Bedreigingen"]
+          * Groei-onderwerp: ["Omzet", "Kosten", "Winst"]
+          * Strategie: ["Visie", "Plan", "Actie", "Resultaat"]
+          * Keuze-onderwerp: ["Ja?", "Nee?", "Misschien?"]
+          * Leiderschap: ["Richting", "Vertrouwen", "Lef"]
+        - Elk blok: 1 kort woord (max 2 woorden). Houd het simpel.
+        - De blokken vormen een visueel grid op de intro slide en geven direct context over het onderwerp.
 
         CONTENT slide:
         {
@@ -60,7 +70,7 @@ export function buildCarouselPrompt(topic: string, kennisbank: string): string {
             "id": "slide-N",
             "content": {
                 "title": "Korte krachtige conclusie of tegenstelling (optioneel, max 8 woorden). Dit wordt vetgedrukt en groter weergegeven onder de body tekst.",
-                "body": "De hoofdtekst. KORT: max 3-4 zinnen (max 50 woorden). Schrijf in Jeroens stijl: reflectief, met retorische vragen en 'Nee: ...' correcties. GEEN opsommingstekens. Minder is meer — laat witruimte op de slide.",
+                "body": "De hoofdtekst. Schrijf 4-8 zinnen (60-120 woorden) per slide. Ga de diepte in: geef voorbeelden, stel vragen, trek vergelijkingen. Schrijf in Jeroens stijl: reflectief, met retorische vragen en 'Nee: ...' correcties. GEEN opsommingstekens. De tekst mag de slide vullen — lege slides zijn saai.",
                 "footer": "Bron indien van toepassing. LAAT LEEG als er geen externe bron is. NOOIT 'Business Verbeteraars' of merknamen hier.",
                 "blokken": ["Woord1", "Woord2", "Woord3"]
             }
@@ -78,7 +88,7 @@ export function buildCarouselPrompt(topic: string, kennisbank: string): string {
             "id": "slide-N",
             "content": {
                 "title": "Reflectieve vraag (optioneel)",
-                "body": "Een korte vraag aan de lezer (max 2-3 zinnen, max 30 woorden). In Jeroens stijl: persoonlijk ('jij'), eerlijk, zonder oordeel.",
+                "body": "Een persoonlijke vraag aan de lezer (3-5 zinnen, 40-80 woorden). Maak het concreet en herkenbaar. In Jeroens stijl: persoonlijk ('jij'), eerlijk, zonder oordeel. Geef context bij de vraag, niet alleen de vraag zelf.",
                 "cta": "Like & comment"
             }
         }
@@ -99,7 +109,7 @@ export function buildCarouselPrompt(topic: string, kennisbank: string): string {
         {
             "title": "Interne tracking titel",
             "topic": "${topic}",
-            "postBody": "LINKEDIN POST TEKST. Begin met een herkenbare observatie. Gebruik Jeroens toon: nuchter, reflectief, confronterend. Eindig met 3-5 hashtags (bijv. #businessverbeteraars #ondernemen). GEEN grof taalgebruik.",
+            "postBody": "LINKEDIN POST TEKST (300-400 woorden). Dit is de volledige LinkedIn post die bij de carousel hoort. Schrijf een compleet verhaal: begin met een herkenbare observatie, bouw op met voorbeelden en inzichten, en eindig met een reflectieve vraag. Gebruik Jeroens toon: nuchter, reflectief, confronterend. Korte alinea's, witregels tussen gedachten. De post moet op zichzelf staan als waardevolle content, niet slechts een samenvatting van de slides. Eindig met 3-5 hashtags (bijv. #businessverbeteraars #ondernemen). GEEN grof taalgebruik.",
             "slides": [ ... alle slides hier ... ],
             "metadata": {
                 "author": "Jeroen",

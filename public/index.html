@@ -4,192 +4,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Verbeteraars | Content Tool</title>
+    <title>Business Verbeteraars | Content Engine</title>
     <link href="/styles.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Outfit:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Caveat:wght@400;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Outfit:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/favicon-v2.svg">
-
-    <!-- Fabric.js for canvas editing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <!-- jsPDF for client-side PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
-<body class="min-h-screen flex flex-col items-center py-10 px-4 text-slate-800">
+<body>
 
-    <!-- Header Section -->
-    <header class="w-full max-w-7xl flex justify-between items-center mb-8">
-        <div class="flex items-center gap-4">
-            <img src="/assets/logo.svg" alt="Logo" class="h-10">
-            <span class="text-sm font-bold text-gray-400 tracking-widest uppercase hidden sm:block">Content
-                Engine</span>
+    <!-- ═══ Top Navigation Bar ═══ -->
+    <nav class="nav-bar">
+        <div class="nav-inner">
+            <div class="nav-brand">
+                <img src="/assets/logo.svg" alt="Business Verbeteraars" class="nav-logo">
+                <div class="nav-divider"></div>
+                <span class="nav-label">Content Engine</span>
+            </div>
+            <a href="https://www.businessverbeteraars.nl" target="_blank" class="nav-link">
+                businessverbeteraars.nl
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
         </div>
-        <a href="https://www.businessverbeteraars.nl" target="_blank"
-            class="text-primary hover:text-accent transition-colors font-semibold text-sm">
-            Naar website &rarr;
-        </a>
-    </header>
+    </nav>
 
-    <main class="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8">
+    <!-- ═══ Main App Layout ═══ -->
+    <main class="app-layout">
 
-        <!-- Left Column: Input & Text Editor -->
-        <div class="space-y-6">
-            <div>
-                <h1 class="text-3xl lg:text-4xl font-extrabold mb-3 leading-tight">
-                    Van idee naar <br>
-                    <span class="gradient-text">LinkedIn Goud.</span>
-                </h1>
-                <p class="text-sm text-slate-500 leading-relaxed">
-                    Beschrijf je onderwerp, stelling of frustratie. Jeroen's AI-brain doet de rest.
-                </p>
+        <!-- ──── Left Panel: Input & Editor ──── -->
+        <aside class="panel-left" id="panelLeft">
+
+            <!-- Hero / Input Card -->
+            <div class="input-card">
+                <div class="input-card-header">
+                    <h1 class="input-title">
+                        Van idee naar<br>
+                        <span class="gradient-text">LinkedIn Goud.</span>
+                    </h1>
+                    <p class="input-subtitle">Beschrijf je onderwerp, stelling of frustratie.</p>
+                </div>
+                <div class="input-card-body">
+                    <textarea id="topicInput" class="topic-input" placeholder="Bijvoorbeeld: Waarom ondernemers bang zijn om te groeien..." rows="4"></textarea>
+                    <div class="btn-row-generate">
+                        <button id="generateBtn" onclick="generateCarousel()" class="btn-generate">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>AI Genereren</span>
+                        </button>
+                        <button id="manualBtn" onclick="startManual()" class="btn-manual">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            <span>Zelf maken</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-surface p-6 rounded-2xl shadow-xl border border-slate-100 ring-1 ring-slate-900/5">
-                <label for="topicInput"
-                    class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">Onderwerp</label>
-                <textarea id="topicInput"
-                    class="w-full h-28 p-3 rounded-xl border-2 border-slate-200 bg-slate-50 focus:border-secondary focus:ring-0 transition-all text-sm resize-none placeholder-slate-400"
-                    placeholder="Bijvoorbeeld: Waarom ondernemers bang zijn om te groeien..."></textarea>
-
-                <div class="mt-4 flex items-center justify-between">
-                    <span class="text-xs text-slate-400 font-medium">Powered by Zee-zicht.nl</span>
-                    <button id="generateBtn" onclick="generateCarousel()"
-                        class="bg-accent hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-orange-500/30 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 text-sm">
-                        <span>Genereren</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
-                            fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-                                clip-rule="evenodd" />
-                        </svg>
+            <!-- LinkedIn Post Text (hidden until generated) -->
+            <div id="postSection" class="panel-section hidden">
+                <div class="section-header">
+                    <h3 class="section-title">LinkedIn Post</h3>
+                    <button onclick="copyPostText()" class="btn-ghost">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        Kopieer
                     </button>
                 </div>
+                <textarea id="postBodyOutput" readonly class="post-output"></textarea>
             </div>
 
-            <!-- LinkedIn Post Text -->
-            <div id="postSection" class="hidden bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">LinkedIn Post</h3>
-                    <button onclick="copyPostText()"
-                        class="text-secondary hover:text-accent text-xs font-semibold flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012-2v-5a2 2 0 01-2-2h-8a2 2 0 01-2 2v5a2 2 0 012 2z" />
-                        </svg>
-                        Kopieren
-                    </button>
+            <!-- Text Editor (hidden until generated) -->
+            <div id="editorSection" class="panel-section hidden">
+                <div class="section-header">
+                    <h3 class="section-title">Tekst Bewerken</h3>
                 </div>
-                <textarea id="postBodyOutput" readonly
-                    class="w-full h-36 bg-slate-50 border border-slate-100 rounded-lg p-3 text-slate-700 text-xs resize-none focus:outline-none"></textarea>
-            </div>
-
-            <!-- Inline Text Editor (for quick edits) -->
-            <div id="editorSection" class="hidden space-y-4 bg-white p-5 rounded-2xl shadow-lg border border-slate-200">
-                <h3 class="text-sm font-bold text-primary flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Tekst Bewerken
-                </h3>
-                <p class="text-xs text-slate-400">Pas teksten aan en klik 'Toepassen' om de canvas bij te werken. Je kan ook direct op de canvas dubbelklikken om tekst te bewerken.</p>
-                <div id="slidesEditor" class="space-y-4 max-h-[400px] overflow-y-auto pr-1">
-                    <!-- Editor inputs injected here -->
-                </div>
-                <button id="applyEditsBtn" onclick="applyTextEdits()"
-                    class="w-full bg-secondary hover:bg-cyan-600 text-white font-bold py-2.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
+                <div id="slidesEditor" class="slides-editor"></div>
+                <button id="applyEditsBtn" onclick="applyTextEdits()" class="btn-apply">
                     Toepassen op Canvas
                 </button>
             </div>
-        </div>
+        </aside>
 
-        <!-- Right Column: Canvas Editor -->
-        <div class="relative">
-            <!-- Loading State -->
-            <div id="loading" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-white/80 rounded-2xl">
-                <div class="flex flex-col items-center justify-center p-8 text-center">
-                    <div class="loader mb-4"></div>
-                    <h3 class="text-xl font-bold text-primary">Content smeden...</h3>
-                    <p class="text-slate-500 text-sm">Even geduld, Jeroen is aan het typen.</p>
+        <!-- ──── Center: Canvas Area ──── -->
+        <section class="canvas-center" id="canvasCenter">
+
+            <!-- Loading Overlay with spinning logo -->
+            <div id="loading" class="loading-overlay hidden">
+                <div class="loading-content">
+                    <img src="/favicon-blauw.svg" alt="" class="loading-logo">
+                    <p class="loading-text">Content genereren...</p>
+                    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
                 </div>
             </div>
 
-            <!-- Canvas Editor Area -->
+            <!-- Canvas Editor (hidden until generated) -->
             <div id="canvasEditorSection" class="hidden">
-                <!-- Slide Tabs -->
-                <div class="flex items-center justify-between mb-3">
-                    <div id="slidesTabs" class="flex gap-2 overflow-x-auto pb-1">
-                        <!-- Slide tabs injected here -->
-                    </div>
-                    <div class="flex gap-2 shrink-0 ml-4">
-                        <button onclick="exportPositions()"
-                            class="bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-3 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-all"
-                            title="Kopieer element-posities naar clipboard (voor preset calibratie)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Export Posities
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <div id="slidesTabs" class="slide-tabs-wrap"></div>
+                    <div class="toolbar-actions">
+                        <button onclick="shuffleLayout()" class="btn-tool btn-tool-blue" title="Wissel layout">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span class="btn-tool-label">Shuffle</span>
                         </button>
-                        <button onclick="exportPDF()"
-                            class="bg-accent hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Download PDF
+                        <button onclick="exportPDF()" class="btn-tool btn-tool-orange" title="Download PDF">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span class="btn-tool-label">PDF</span>
+                        </button>
+                        <button onclick="exportPositions()" class="btn-tool btn-tool-grey" title="Export posities">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                         </button>
                     </div>
                 </div>
 
-                <!-- Canvas + Layers Layout -->
-                <div class="grid grid-cols-[1fr_220px] gap-4">
-                    <!-- Canvas Wrapper -->
-                    <div id="canvasWrapper" class="bg-slate-200 rounded-xl overflow-hidden relative">
+                <!-- Canvas + Right Panel -->
+                <div class="canvas-layout">
+                    <div id="canvasWrapper" class="canvas-wrapper">
                         <div id="canvasScaleContainer">
                             <canvas id="slideCanvas"></canvas>
                         </div>
                     </div>
 
-                    <!-- Layer Panel -->
-                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                        <div class="px-3 py-2.5 border-b border-slate-100 bg-slate-50">
-                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Lagen</h3>
+                    <!-- Right Panel: Layers + Library -->
+                    <div class="right-panel">
+                        <!-- Layers -->
+                        <div class="rp-section">
+                            <div class="rp-header">Lagen</div>
+                            <div id="layerPanel" class="rp-body layer-list"></div>
                         </div>
-                        <div id="layerPanel" class="flex-1 overflow-y-auto p-1.5 space-y-0.5 max-h-[500px]">
-                            <!-- Layer items injected here -->
+
+                        <!-- Element Library -->
+                        <div class="rp-section">
+                            <div class="rp-header rp-header-toggle" onclick="toggleLibrary()">
+                                Elementen
+                                <svg id="libraryChevron" xmlns="http://www.w3.org/2000/svg" class="rp-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                            <div id="elementLibrary" class="rp-body library-body">
+                                <!-- Blokken -->
+                                <div class="lib-group">
+                                    <div class="lib-group-title">Blokken</div>
+                                    <div class="lib-grid lib-grid-3">
+                                        <button onclick="addBlokToCanvas(0, 0)" class="lib-item" title="Blauw 1"><img src="/assets/blokken/blokken blauw 1.png"></button>
+                                        <button onclick="addBlokToCanvas(0, 1)" class="lib-item" title="Blauw 2"><img src="/assets/blokken/blokken blauw 2.png"></button>
+                                        <button onclick="addBlokToCanvas(0, 2)" class="lib-item" title="Blauw 3"><img src="/assets/blokken/blokken blauw 3.png"></button>
+                                        <button onclick="addBlokToCanvas(2, 0)" class="lib-item" title="Oranje 1"><img src="/assets/blokken/blokken oranje 1.png"></button>
+                                        <button onclick="addBlokToCanvas(2, 1)" class="lib-item" title="Oranje 2"><img src="/assets/blokken/blokken oranje 2.png"></button>
+                                        <button onclick="addBlokToCanvas(2, 2)" class="lib-item" title="Oranje 3"><img src="/assets/blokken/blokken oranje 3.png"></button>
+                                        <button onclick="addBlokToCanvas(4, 0)" class="lib-item" title="Zwart"><img src="/assets/blokken/blokken zwarte 1.png"></button>
+                                        <button onclick="addBlokToCanvas(3, 0)" class="lib-item" title="Wit 1"><img src="/assets/blokken/blokken witte 1.png"></button>
+                                        <button onclick="addBlokToCanvas(3, 1)" class="lib-item" title="Wit 2"><img src="/assets/blokken/blokken witte 2.png"></button>
+                                    </div>
+                                </div>
+                                <!-- Tekst -->
+                                <div class="lib-group">
+                                    <div class="lib-group-title">Tekst</div>
+                                    <div class="lib-stack">
+                                        <button onclick="addTextToCanvas('heading')" class="lib-text-item"><span class="font-bold">Kop</span><span class="lib-meta">Bold</span></button>
+                                        <button onclick="addTextToCanvas('body')" class="lib-text-item"><span style="font-weight:300;font-style:italic">Body</span><span class="lib-meta">Light</span></button>
+                                        <button onclick="addTextToCanvas('hand')" class="lib-text-item"><span style="font-family:Caveat">Handschrift</span><span class="lib-meta">Caveat</span></button>
+                                        <button onclick="addTextToCanvas('label')" class="lib-text-item"><span class="lib-label-preview">Label</span><span class="lib-meta">Blok</span></button>
+                                    </div>
+                                </div>
+                                <!-- Pijlen -->
+                                <div class="lib-group">
+                                    <div class="lib-group-title">Pijlen — Dik</div>
+                                    <div class="lib-grid lib-grid-3">
+                                        <button onclick="addArrowToCanvas('korte pijl dikgedrukt links blauw')" class="lib-item" title="Blauw dik"><img src="/assets/pijlen/korte pijl dikgedrukt links blauw.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl dikgedrukt links feloranje')" class="lib-item" title="Oranje dik"><img src="/assets/pijlen/korte pijl dikgedrukt links feloranje.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl dikgedrukt links lichtblauw')" class="lib-item" title="Lichtblauw dik"><img src="/assets/pijlen/korte pijl dikgedrukt links lichtblauw.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl dikgedrukt links lichtoranje')" class="lib-item" title="Lichtoranje dik"><img src="/assets/pijlen/korte pijl dikgedrukt links lichtoranje.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl dikgedrukt links wijnrood-bruin')" class="lib-item" title="Wijnrood dik"><img src="/assets/pijlen/korte pijl dikgedrukt links wijnrood-bruin.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl dikgedrukt links zwart')" class="lib-item" title="Zwart dik"><img src="/assets/pijlen/korte pijl dikgedrukt links zwart.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl dikgedrukt links grijsbeige')" class="lib-item" title="Grijs dik"><img src="/assets/pijlen/korte pijl dikgedrukt links grijsbeige.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl dikgedrukt links wit')" class="lib-item lib-item-dark" title="Wit dik"><img src="/assets/pijlen/korte pijl dikgedrukt links wit.png"></button>
+                                    </div>
+                                </div>
+                                <div class="lib-group">
+                                    <div class="lib-group-title">Pijlen — Dun</div>
+                                    <div class="lib-grid lib-grid-3">
+                                        <button onclick="addArrowToCanvas('korte pijl blauw links wijzend')" class="lib-item" title="Blauw dun"><img src="/assets/pijlen/korte pijl blauw links wijzend.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl lichtoranje links wijzend')" class="lib-item" title="Oranje dun"><img src="/assets/pijlen/korte pijl lichtoranje links wijzend.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl grijs links wijzend')" class="lib-item" title="Grijs dun"><img src="/assets/pijlen/korte pijl grijs links wijzend.png"></button>
+                                        <button onclick="addArrowToCanvas('korte pijl wit links wijzend')" class="lib-item lib-item-dark" title="Wit dun"><img src="/assets/pijlen/korte pijl wit links wijzend.png"></button>
+                                    </div>
+                                </div>
+                                <div class="lib-group">
+                                    <div class="lib-group-title">Pijlen — Lang</div>
+                                    <div class="lib-grid lib-grid-2">
+                                        <button onclick="addArrowToCanvas('lange pijl blauw 1')" class="lib-item" title="Blauw lang"><img src="/assets/pijlen/lange pijl blauw 1.png"></button>
+                                        <button onclick="addArrowToCanvas('lange pijl lichtoranje rechts wijzend')" class="lib-item" title="Oranje lang"><img src="/assets/pijlen/lange pijl lichtoranje rechts wijzend.png"></button>
+                                        <button onclick="addArrowToCanvas('lange pijl grijs rechts wijzend')" class="lib-item" title="Grijs lang"><img src="/assets/pijlen/lange pijl grijs rechts wijzend.png"></button>
+                                        <button onclick="addArrowToCanvas('lange pijl wit rechts wijzend')" class="lib-item lib-item-dark" title="Wit lang"><img src="/assets/pijlen/lange pijl wit rechts wijzend.png"></button>
+                                    </div>
+                                </div>
+
+                                <!-- Vormen -->
+                                <div class="lib-group">
+                                    <div class="lib-group-title">Vormen</div>
+                                    <div class="lib-grid lib-grid-3">
+                                        <button onclick="addShapeToCanvas('line-h')" class="lib-shape" title="Lijn"><div class="shape-line-h"></div></button>
+                                        <button onclick="addShapeToCanvas('circle')" class="lib-shape" title="Cirkel"><div class="shape-circle"></div></button>
+                                        <button onclick="addShapeToCanvas('dot')" class="lib-shape" title="Punt"><div class="shape-dot"></div></button>
+                                        <button onclick="addShapeToCanvas('rect')" class="lib-shape" title="Rechthoek"><div class="shape-rect"></div></button>
+                                        <button onclick="addShapeToCanvas('line-v')" class="lib-shape" title="Lijn V"><div class="shape-line-v"></div></button>
+                                    </div>
+                                </div>
+                                <!-- Delete -->
+                                <button onclick="deleteSelected()" class="btn-delete">Verwijder geselecteerd</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Slide Thumbnails Strip -->
-                <div id="slideThumbnails" class="mt-4 flex gap-3 overflow-x-auto pb-2">
-                    <!-- Thumbnails generated dynamically -->
                 </div>
             </div>
 
             <!-- Empty State -->
-            <div id="emptyState"
-                class="h-[500px] flex flex-col items-center justify-center text-center p-10 opacity-60 bg-gradient-to-tr from-blue-50 to-cyan-50 rounded-2xl">
-                <div class="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mb-4 text-3xl">
-                    &#x1F680;</div>
-                <h3 class="text-lg font-bold text-slate-400">Nog geen output</h3>
-                <p class="text-slate-400 max-w-xs mx-auto mt-2 text-sm">Voer hiernaast een onderwerp in om je eerste
-                    carousel te genereren.</p>
+            <div id="emptyState" class="empty-state">
+                <img src="/favicon-v2.svg" alt="" class="empty-icon">
+                <h3 class="empty-title">Klaar om te starten</h3>
+                <p class="empty-text">Voer een onderwerp in en klik op <strong>Genereren</strong> om je eerste carousel te maken.</p>
             </div>
-        </div>
+        </section>
 
     </main>
+
+    <!-- ═══ Mobile Bottom Bar ═══ -->
+    <div class="mobile-bar" id="mobileBar">
+        <button onclick="toggleMobilePanel('input')" class="mobile-tab active" id="mobileTabInput">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Input
+        </button>
+        <button onclick="toggleMobilePanel('canvas')" class="mobile-tab" id="mobileTabCanvas">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Canvas
+        </button>
+        <button onclick="toggleMobilePanel('text')" class="mobile-tab" id="mobileTabText">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Tekst
+        </button>
+    </div>
 
     <script src="/canvas-editor.js"></script>
     <script src="/app.js"></script>

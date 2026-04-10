@@ -2,8 +2,14 @@ import { Router, Request, Response } from 'express';
 import { CONFIG } from '../config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { logger } from '../utils/logger';
+import presetsData from '../content-engine/presets.json';
 
 const router = Router();
+
+// Public endpoint: list all presets (used by /templates.html)
+router.get('/presets', (_req: Request, res: Response) => {
+    res.json({ success: true, presets: presetsData.presets });
+});
 
 // Alleen beschikbaar buiten productie
 if (process.env.NODE_ENV !== 'production') {

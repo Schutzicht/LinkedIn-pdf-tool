@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preset Editor | Business Verbeteraars</title>
+    <link href="/styles.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Outfit:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Caveat:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/favicon-v2.svg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Top bar ── */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: #16213e;
+            border-bottom: 1px solid #0f3460;
+            flex-shrink: 0;
+        }
+        .top-bar h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #A8D4E6;
+            letter-spacing: 1px;
+        }
+        .top-bar .actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-export {
+            background: #0081C6;
+            color: #fff;
+        }
+        .btn-export:hover { background: #006da8; }
+        .btn-import {
+            background: #BF6A01;
+            color: #fff;
+        }
+        .btn-import:hover { background: #a55c01; }
+        .btn-reset {
+            background: #3D2E32;
+            color: #ccc;
+        }
+        .btn-reset:hover { background: #56565A; }
+        .btn-back {
+            background: transparent;
+            color: #A8D4E6;
+            border: 1px solid #0f3460;
+        }
+        .btn-back:hover { background: #0f3460; }
+
+        /* ── Main layout ── */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ── Sidebar: slide type tabs ── */
+        .sidebar {
+            width: 220px;
+            background: #16213e;
+            border-right: 1px solid #0f3460;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .sidebar-title {
+            padding: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .slide-type-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            border: none;
+            background: transparent;
+            color: #ccc;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            border-left: 3px solid transparent;
+            transition: all 0.15s;
+        }
+        .slide-type-btn:hover { background: rgba(255,255,255,0.04); }
+        .slide-type-btn.active {
+            background: rgba(0, 129, 198, 0.12);
+            color: #A8D4E6;
+            border-left-color: #0081C6;
+            font-weight: 700;
+        }
+        .slide-type-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Canvas area ── */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+        #canvasWrapper {
+            position: relative;
+            background: #222;
+            border-radius: 12px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        #canvasScaleContainer {
+            transform-origin: top left;
+        }
+
+        /* ── Right panel: layers + info ── */
+        .right-panel {
+            width: 260px;
+            background: #16213e;
+            border-left: 1px solid #0f3460;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .panel-section {
+            padding: 16px;
+            border-bottom: 1px solid #0f3460;
+        }
+        .panel-section h3 {
+            font-size: 11px;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        #layerPanel .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #aaa;
+            transition: all 0.1s;
+        }
+        #layerPanel .layer-item:hover { background: rgba(255,255,255,0.05); }
+        #layerPanel .layer-item.selected {
+            background: rgba(0, 129, 198, 0.15);
+            color: #A8D4E6;
+        }
+        .layer-icon {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #555;
+            flex-shrink: 0;
+        }
+        .selected .layer-icon { background: #0081C6; }
+
+        /* ── Selection info ── */
+        #selectionInfo {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.8;
+        }
+        #selectionInfo .label { color: #555; }
+        #selectionInfo .value { color: #A8D4E6; font-weight: 600; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #0081C6;
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ── Import modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            width: 500px;
+            max-width: 90vw;
+        }
+        .modal h2 {
+            font-size: 16px;
+            color: #A8D4E6;
+            margin-bottom: 12px;
+        }
+        .modal textarea {
+            width: 100%;
+            height: 200px;
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 12px;
+            resize: vertical;
+        }
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <h1>PRESET EDITOR</h1>
+        <div class="actions">
+            <button class="btn btn-back" onclick="window.location='/'">Terug</button>
+            <button class="btn btn-import" onclick="showImportModal()">Import JSON</button>
+            <button class="btn btn-export" onclick="doExport()">Export Posities</button>
+            <button class="btn btn-reset" onclick="resetCurrentSlide()">Reset Slide</button>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+
+        <!-- Left Sidebar: Slide Types + Examples -->
+        <div class="sidebar">
+            <div class="sidebar-title">Intro Layouts</div>
+            <button class="slide-type-btn active" data-type="intro-swot" onclick="switchPreset('intro-swot', this)">
+                <span class="slide-type-dot" style="background: #0081C6;"></span>
+                Grid 2x2 — SWOT
+            </button>
+            <button class="slide-type-btn" data-type="intro-groei" onclick="switchPreset('intro-groei', this)">
+                <span class="slide-type-dot" style="background: #BF6A01;"></span>
+                Hero — Groei
+            </button>
+            <button class="slide-type-btn" data-type="intro-leiderschap" onclick="switchPreset('intro-leiderschap', this)">
+                <span class="slide-type-dot" style="background: #56565A;"></span>
+                Sidebar — Leiderschap
+            </button>
+            <button class="slide-type-btn" data-type="intro-klant" onclick="switchPreset('intro-klant', this)">
+                <span class="slide-type-dot" style="background: #989798;"></span>
+                Diagonaal — Klant
+            </button>
+            <button class="slide-type-btn" data-type="intro-financieel" onclick="switchPreset('intro-financieel', this)">
+                <span class="slide-type-dot" style="background: #0081C6;"></span>
+                Bottom Row — Financieel
+            </button>
+            <button class="slide-type-btn" data-type="intro-team" onclick="switchPreset('intro-team', this)">
+                <span class="slide-type-dot" style="background: #BF6A01;"></span>
+                Scattered — Team
+            </button>
+            <button class="slide-type-btn" data-type="intro-keuze" onclick="switchPreset('intro-keuze', this)">
+                <span class="slide-type-dot" style="background: #56565A;"></span>
+                Piramide — Keuzes
+            </button>
+            <button class="slide-type-btn" data-type="intro-simpel" onclick="switchPreset('intro-simpel', this)">
+                <span class="slide-type-dot" style="background: #989798;"></span>
+                Stack — Eenvoud
+            </button>
+            <button class="slide-type-btn" data-type="intro-overlap" onclick="switchPreset('intro-overlap', this)">
+                <span class="slide-type-dot" style="background: #BF6A01;"></span>
+                Overlap — Levenscyclus
+            </button>
+
+            <div class="sidebar-title" style="margin-top: 8px;">Voorbeelden — Content</div>
+            <button class="slide-type-btn" data-type="content" onclick="switchPreset('content', this)">
+                <span class="slide-type-dot" style="background: #989798;"></span>
+                Content (basis)
+            </button>
+            <button class="slide-type-btn" data-type="content-blokken" onclick="switchPreset('content-blokken', this)">
+                <span class="slide-type-dot" style="background: #56565A;"></span>
+                Content + Blokken
+            </button>
+
+            <div class="sidebar-title" style="margin-top: 8px;">Voorbeelden — Overig</div>
+            <button class="slide-type-btn" data-type="engagement" onclick="switchPreset('engagement', this)">
+                <span class="slide-type-dot" style="background: #BF6A01;"></span>
+                Engagement
+            </button>
+            <button class="slide-type-btn" data-type="outro" onclick="switchPreset('outro', this)">
+                <span class="slide-type-dot" style="background: #3D2E32;"></span>
+                Outro
+            </button>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="canvas-area">
+            <div id="canvasWrapper">
+                <div id="canvasScaleContainer">
+                    <canvas id="slideCanvas" width="1080" height="1080"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Layers + Selection Info -->
+        <div class="right-panel">
+            <div class="panel-section">
+                <h3>Lagen</h3>
+                <div id="layerPanel"></div>
+            </div>
+            <div class="panel-section">
+                <h3>Selectie</h3>
+                <div id="selectionInfo">
+                    <div><span class="label">Klik op een element</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <h2>Import Preset JSON</h2>
+            <textarea id="importJson" placeholder='Plak hier de JSON van een eerder geexporteerde preset...'></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-reset" onclick="hideImportModal()">Annuleren</button>
+                <button class="btn btn-export" onclick="doImport()">Importeren</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the shared canvas editor -->
+    <script src="/canvas-editor.js"></script>
+
+    <script>
+        // ── Preset Data: diverse voorbeelden per onderwerp ──
+        const PRESET_SLIDES = {
+
+            // ── INTRO VOORBEELDEN — elk met een ANDER visueel design ──
+
+            // 1. GRID 2x2 — klassiek, 4 blokken in vierkant
+            'intro-swot': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ SWOT IN DE PRAKTIJK ~~~',
+                    title: 'Ken jij je eigen zwaktes?',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Sterktes', 'Zwaktes', 'Kansen', 'Bedreigingen'],
+                },
+                visuals: { style: 'cover', layout: 'grid' },
+            },
+            // 2. HERO — 1 groot blok centraal, kleinere eronder
+            'intro-groei': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ OVER GROEI ~~~',
+                    title: 'Waarom groeit je bedrijf niet meer?',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Groei', 'Omzet', 'Kosten', 'Winst'],
+                },
+                visuals: { style: 'cover', layout: 'hero' },
+            },
+            // 3. SIDEBAR — blokken verticaal links, titel rechts
+            'intro-leiderschap': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ LEIDERSCHAP ~~~',
+                    title: 'Leidinggeven is loslaten',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Richting', 'Vertrouwen', 'Lef', 'Rust'],
+                },
+                visuals: { style: 'cover', layout: 'sidebar' },
+            },
+            // 4. DIAGONAL — blokken trap-gewijs schuin
+            'intro-klant': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ KLANTRELATIES ~~~',
+                    title: 'Je klant begrijpen begint bij luisteren',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Behoefte', 'Ervaring', 'Loyaliteit'],
+                },
+                visuals: { style: 'cover', layout: 'diagonal' },
+            },
+            // 5. BOTTOM ROW — grote blokken breed naast elkaar onderaan
+            'intro-financieel': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ FINANCIEEL INZICHT ~~~',
+                    title: 'Weet jij waar je geld blijft?',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Inkomsten', 'Uitgaven', 'Marge', 'Investering'],
+                },
+                visuals: { style: 'cover', layout: 'bottom-row' },
+            },
+            // 6. SCATTERED — organisch verspreid, wisselende groottes + rotaties
+            'intro-team': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ TEAM & CULTUUR ~~~',
+                    title: 'Een sterk team bouw je niet met regels',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Talent', 'Motivatie', 'Cultuur', 'Groei'],
+                },
+                visuals: { style: 'cover', layout: 'scattered' },
+            },
+            // 7. PYRAMID — 1 boven, 2 onder
+            'intro-keuze': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ BESLUITVORMING ~~~',
+                    title: 'Twijfel is ook een keuze',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Ja?', 'Nee?', 'Misschien?'],
+                },
+                visuals: { style: 'cover', layout: 'pyramid' },
+            },
+            // 8. STACK — verticaal onder elkaar links, titel rechts
+            'intro-simpel': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ EENVOUD ~~~',
+                    title: 'Minder doen, meer bereiken',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Plan', 'Focus', 'Actie'],
+                },
+                visuals: { style: 'cover', layout: 'stack' },
+            },
+            // 9. OVERLAP — blokken overlappend in een rij als ketting
+            'intro-overlap': {
+                type: 'intro',
+                id: 'slide-1',
+                content: {
+                    subtitle: '~~~ DE LEVENSCYCLUS ~~~',
+                    title: 'Waar sta jij nu?',
+                    cta: 'Swipe voor het antwoord',
+                    blokken: ['Starten', 'Stabiliseren', 'Groeien', 'Vernieuwen', 'Overdragen'],
+                },
+                visuals: { style: 'cover', layout: 'overlap' },
+            },
+
+            // ── CONTENT VOORBEELDEN ─────────────────────────────────
+
+            'content': {
+                type: 'content',
+                id: 'slide-2',
+                content: {
+                    body: 'De meeste ondernemers denken dat groei vanzelf komt. Dat als je maar hard genoeg werkt, de resultaten volgen.\n\nNee: groei vraagt om richting. Om keuzes die pijn doen.',
+                    title: 'Groei is geen toeval.',
+                    footer: '',
+                },
+            },
+            'content-blokken': {
+                type: 'content',
+                id: 'slide-3',
+                content: {
+                    body: 'Elke ondernemer staat voor dezelfde afweging. Investeer je in wat je kent, of durf je iets nieuws?',
+                    title: 'Durven kiezen is durven verliezen.',
+                    footer: '',
+                    blokken: ['Ja?', 'Nee?', 'Misschien?'],
+                },
+            },
+
+            // ── ENGAGEMENT & OUTRO ──────────────────────────────────
+
+            'engagement': {
+                type: 'engagement',
+                id: 'slide-4',
+                content: {
+                    title: 'En jij?',
+                    body: 'Welke keuze heb jij te lang uitgesteld? Niet de makkelijke. Die ene waar je al maanden omheen draait.',
+                    cta: 'Like & comment',
+                },
+            },
+            'outro': {
+                type: 'outro',
+                id: 'slide-5',
+                content: {
+                    title: 'DANKJEWEL!',
+                    subtitle: 'MEER VRAGEN?',
+                    body: 'businessverbeteraars.nl',
+                    cta: 'Connect',
+                },
+            },
+        };
+
+        let currentPresetType = 'intro-swot';
+        let presetEditor = null;
+
+        // ── Initialize ──
+        async function init() {
+            presetEditor = new SlideCanvasEditor('slideCanvas', 'layerPanel', null);
+
+            // Override _updateCanvasScale for our layout
+            presetEditor._updateCanvasScale = function() {
+                const wrapper = document.getElementById('canvasWrapper');
+                if (!wrapper) return;
+                const area = wrapper.parentElement;
+                const availW = area.clientWidth - 48;
+                const availH = area.clientHeight - 48;
+                const scale = Math.min(availW / 1080, availH / 1080, 1);
+
+                const container = document.getElementById('canvasScaleContainer');
+                if (container) {
+                    container.style.transform = `scale(${scale})`;
+                    container.style.width = '1080px';
+                    container.style.height = '1080px';
+                }
+                wrapper.style.width = Math.round(1080 * scale) + 'px';
+                wrapper.style.height = Math.round(1080 * scale) + 'px';
+            };
+
+            // Track selection for info panel
+            presetEditor.fabricCanvas.on('selection:created', updateSelectionInfo);
+            presetEditor.fabricCanvas.on('selection:updated', updateSelectionInfo);
+            presetEditor.fabricCanvas.on('selection:cleared', clearSelectionInfo);
+            presetEditor.fabricCanvas.on('object:moving', updateSelectionInfo);
+            presetEditor.fabricCanvas.on('object:scaling', updateSelectionInfo);
+            presetEditor.fabricCanvas.on('object:rotating', updateSelectionInfo);
+
+            await loadPreset('intro-swot');
+            window.addEventListener('resize', () => presetEditor._updateCanvasScale());
+        }
+
+        async function loadPreset(type) {
+            currentPresetType = type;
+            const slide = PRESET_SLIDES[type];
+
+            // Wrap in carousel data format
+            const carouselData = {
+                title: 'Preset Preview',
+                topic: 'preset',
+                postBody: '',
+                slides: [slide],
+                metadata: { author: 'Preset Editor', date: new Date().toISOString() },
+            };
+
+            await presetEditor.loadSlides(carouselData);
+            presetEditor._updateCanvasScale();
+        }
+
+        async function switchPreset(type, btn) {
+            // Save positions before switching
+            document.querySelectorAll('.slide-type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            await loadPreset(type);
+        }
+
+        async function resetCurrentSlide() {
+            await loadPreset(currentPresetType);
+            showToast('Slide gereset naar standaard posities');
+        }
+
+        // ── Export ──
+        function doExport() {
+            // Gather positions from current canvas
+            const objects = presetEditor.fabricCanvas.getObjects();
+            const positions = {};
+
+            objects.forEach(obj => {
+                const name = obj.layerName || 'unnamed';
+                if (name.startsWith('_')) return; // skip internal
+
+                const info = {
+                    left: Math.round(obj.left),
+                    top: Math.round(obj.top),
+                };
+                if (obj.width) info.width = Math.round(obj.width);
+                if (obj.height) info.height = Math.round(obj.height);
+                if (obj.scaleX && obj.scaleX !== 1) info.scaleX = +obj.scaleX.toFixed(3);
+                if (obj.scaleY && obj.scaleY !== 1) info.scaleY = +obj.scaleY.toFixed(3);
+                if (obj.angle) info.angle = +obj.angle.toFixed(1);
+                if (obj.fontSize) info.fontSize = obj.fontSize;
+                if (obj.fontFamily) info.fontFamily = obj.fontFamily;
+                if (obj.fontWeight) info.fontWeight = obj.fontWeight;
+                if (obj.fill && obj.fill !== '#000000') info.fill = obj.fill;
+                positions[name] = info;
+            });
+
+            const exportData = {
+                type: currentPresetType,
+                exportedAt: new Date().toISOString(),
+                positions,
+            };
+
+            const json = JSON.stringify(exportData, null, 2);
+            console.log('=== PRESET EXPORT ===\n' + json);
+
+            navigator.clipboard.writeText(json).then(() => {
+                showToast('Preset JSON gekopieerd naar clipboard!');
+            }).catch(() => {
+                prompt('Kopieer deze preset:', json);
+            });
+        }
+
+        // ── Import ──
+        function showImportModal() {
+            document.getElementById('importModal').classList.add('show');
+            document.getElementById('importJson').value = '';
+            document.getElementById('importJson').focus();
+        }
+        function hideImportModal() {
+            document.getElementById('importModal').classList.remove('show');
+        }
+        function doImport() {
+            const raw = document.getElementById('importJson').value.trim();
+            if (!raw) return;
+
+            try {
+                const data = JSON.parse(raw);
+                if (!data.positions) throw new Error('Geen "positions" veld gevonden');
+
+                // Apply positions to current canvas objects
+                const objects = presetEditor.fabricCanvas.getObjects();
+                let applied = 0;
+
+                Object.entries(data.positions).forEach(([name, pos]) => {
+                    const obj = objects.find(o => o.layerName === name);
+                    if (obj && pos) {
+                        if (pos.left !== undefined) obj.set('left', pos.left);
+                        if (pos.top !== undefined) obj.set('top', pos.top);
+                        if (pos.scaleX !== undefined) obj.set('scaleX', pos.scaleX);
+                        if (pos.scaleY !== undefined) obj.set('scaleY', pos.scaleY);
+                        if (pos.angle !== undefined) obj.set('angle', pos.angle);
+                        if (pos.fontSize !== undefined) obj.set('fontSize', pos.fontSize);
+                        obj.setCoords();
+                        applied++;
+                    }
+                });
+
+                presetEditor.fabricCanvas.renderAll();
+                hideImportModal();
+                showToast(`${applied} elementen bijgewerkt vanuit import`);
+            } catch (e) {
+                showToast('Ongeldige JSON: ' + e.message);
+            }
+        }
+
+        // ── Selection info panel ──
+        function updateSelectionInfo() {
+            const obj = presetEditor.fabricCanvas.getActiveObject();
+            if (!obj) return clearSelectionInfo();
+
+            const html = `
+                <div><span class="label">Element:</span> <span class="value">${obj.layerName || 'unnamed'}</span></div>
+                <div><span class="label">X:</span> <span class="value">${Math.round(obj.left)}</span>
+                     <span class="label">Y:</span> <span class="value">${Math.round(obj.top)}</span></div>
+                ${obj.width ? `<div><span class="label">W:</span> <span class="value">${Math.round(obj.width * (obj.scaleX || 1))}</span>
+                     <span class="label">H:</span> <span class="value">${Math.round(obj.height * (obj.scaleY || 1))}</span></div>` : ''}
+                ${obj.angle ? `<div><span class="label">Hoek:</span> <span class="value">${obj.angle.toFixed(1)}deg</span></div>` : ''}
+                ${obj.fontSize ? `<div><span class="label">Font:</span> <span class="value">${obj.fontSize}px</span></div>` : ''}
+            `;
+            document.getElementById('selectionInfo').innerHTML = html;
+        }
+        function clearSelectionInfo() {
+            document.getElementById('selectionInfo').innerHTML = '<div><span class="label">Klik op een element</span></div>';
+        }
+
+        // ── Toast ──
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2500);
+        }
+
+        // ── Boot ──
+        init();
+    </script>
+</body>
+
+</html>

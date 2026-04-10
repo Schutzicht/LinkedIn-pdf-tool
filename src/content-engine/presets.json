@@ -1,0 +1,382 @@
+{
+  "presets": [
+    {
+      "id": "reflectie-kort",
+      "name": "Reflectie Kort",
+      "useWhen": "korte persoonlijke reflectie of observatie zonder duidelijke structuur",
+      "dontUseWhen": "analyse, opsommingen, processen of meerstaps verhalen",
+      "examples": ["Waarom ondernemers stil moeten staan", "Het is OK om te twijfelen"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "grid",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3" },
+          "decorations": [
+            { "type": "arrow-thin", "color": "lichtblauw", "x": 80, "y": 720, "scale": 0.35, "angle": 15 }
+          ]
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "reflectie-diep",
+      "name": "Reflectie Diep",
+      "useWhen": "uitgebreide persoonlijke reflectie of confrontatie met meerdere lagen",
+      "dontUseWhen": "korte tips of simpele observaties",
+      "examples": ["Wat ik leerde van mijn grootste fout", "Waarom ik gestopt ben met X"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "sidebar",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3" }
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "drie-lessen",
+      "name": "3 Lessen",
+      "useWhen": "drie concrete lessen, tips of inzichten over een onderwerp",
+      "dontUseWhen": "meer of minder dan 3 punten, processen, vergelijkingen",
+      "examples": ["3 lessen uit 10 jaar ondernemen", "3 dingen die ik anders zou doen"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "grid",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3-lessons" }
+        },
+        { "type": "content", "content": { "title": "Les 1", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Les 2", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Les 3", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "vijf-lessen",
+      "name": "5 Lessen",
+      "useWhen": "vijf concrete lessen of tips over een onderwerp",
+      "dontUseWhen": "minder dan 5 punten of processen",
+      "examples": ["5 lessen uit 20 jaar ondernemen", "5 dingen die niemand je vertelt"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "bottom-row",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-5-lessons" },
+          "decorations": [
+            { "type": "long-arrow", "x": 100, "y": 380, "scale": 0.28, "angle": 0 }
+          ]
+        },
+        { "type": "content", "content": { "title": "Les 1", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Les 2-3", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Les 4-5", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "swot-analyse",
+      "name": "SWOT Analyse",
+      "useWhen": "SWOT, sterktes, zwaktes, kansen, bedreigingen, vier kanten/dimensies/aspecten van bedrijf, strategische evaluatie, bedrijf doorlichten, audit, scan",
+      "dontUseWhen": "persoonlijke verhalen, lessen, reflecties, processen, mythes",
+      "examples": ["SWOT analyse voor MKB", "De vier kanten van je bedrijf controleren", "Vier dimensies van je strategie", "Bedrijf doorlichten in 4 stappen"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "grid",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "fixed-swot" },
+          "decorations": [
+            { "type": "line-h", "anchor": "grid-divider-h" },
+            { "type": "line-v", "anchor": "grid-divider-v" }
+          ]
+        },
+        { "type": "content", "content": { "title": "Sterktes", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Zwaktes", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Kansen", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Bedreigingen", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "tegenstelling",
+      "name": "Tegenstelling",
+      "useWhen": "tegenstelling of contrast tussen twee dingen, twee opties, voor/na",
+      "dontUseWhen": "drie of meer opties, processen, lessen",
+      "examples": ["Doorpakken of stoppen?", "Strategie of intuïtie?"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "overlap",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-2-contrast" },
+          "decorations": [
+            { "type": "arrow-thick", "color": "feloranje", "x": 430, "y": 632, "scale": 0.22, "angle": 0 },
+            { "type": "arrow-thick", "color": "feloranje", "x": 576, "y": 629, "scale": 0.22, "angle": 0, "flipX": true }
+          ]
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "vijf-stappen",
+      "name": "5-Stappen Proces",
+      "useWhen": "stappenplan met vijf stappen, hoe doe je iets, proces in fases",
+      "dontUseWhen": "lessen, reflecties, vergelijkingen, analyses",
+      "examples": ["5 stappen naar betere klantrelaties", "Het proces van strategievorming"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "overlap",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-5-steps" },
+          "decorations": [
+            { "type": "long-arrow", "x": 100, "y": 700, "scale": 0.42, "angle": 0 }
+          ]
+        },
+        { "type": "content", "content": { "title": "Stap 1", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Stap 2-3", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Stap 4-5", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "vier-stappen",
+      "name": "4-Stappen Plan",
+      "useWhen": "stappenplan met vier fases of pijlers",
+      "dontUseWhen": "andere aantallen stappen, lessen, analyses",
+      "examples": ["4 fases van bedrijfsgroei", "Plan in 4 stappen"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "pyramid",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-4-steps" }
+        },
+        { "type": "content", "content": { "title": "Fase 1-2", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Fase 3", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Fase 4", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "persoonlijk-verhaal",
+      "name": "Persoonlijk Verhaal",
+      "useWhen": "persoonlijke ervaring, anekdote, verhaal uit eigen leven of werk",
+      "dontUseWhen": "analyses, opsommingen, generieke tips",
+      "examples": ["Hoe ik mijn eerste klant verloor", "De dag dat alles veranderde"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "hero",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3" },
+          "decorations": [
+            { "type": "frame-portrait", "x": 80, "y": 60, "scale": 0.95, "angle": 0 },
+            { "type": "business-svg", "asset": "widea-raketlamp-blauw.svg", "x": 700, "y": 760, "scale": 0.18 }
+          ]
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "mythbusting",
+      "name": "Mythes Doorprikken",
+      "useWhen": "ontkrachten van veelgehoorde aannames, mythes of misverstanden",
+      "dontUseWhen": "neutrale analyses, persoonlijke verhalen, processen",
+      "examples": ["3 mythes over hard werken", "Wat ondernemers verkeerd denken over X"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "scattered",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3-myths" }
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "voor-na",
+      "name": "Voor / Na",
+      "useWhen": "vergelijking tussen oude en nieuwe situatie, voor en na een verandering",
+      "dontUseWhen": "lessen, processen, drie of meer opties",
+      "examples": ["Mijn bedrijf voor en na automatisering", "Hoe ik werkte vroeger vs nu"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "overlap",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "fixed-voor-na" },
+          "decorations": [
+            { "type": "long-arrow", "x": 256, "y": 633, "scale": 0.28, "angle": 0, "flipX": true },
+            { "type": "long-arrow", "x": 257, "y": 688, "scale": 0.28, "angle": 0 }
+          ]
+        },
+        { "type": "content", "content": { "title": "Toen", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Nu", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "vraag-stelling",
+      "name": "Prikkelende Vraag",
+      "useWhen": "een prikkelende vraag of stelling als hoofdthema, uitnodiging tot reflectie",
+      "dontUseWhen": "concrete tips, processen, analyses",
+      "examples": ["Ben jij eigenlijk wel ondernemer?", "Waarom doe je wat je doet?"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "sidebar",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3" }
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "confrontatie",
+      "name": "Confrontatie",
+      "useWhen": "confronterende observatie of harde waarheid die ondernemers niet willen horen",
+      "dontUseWhen": "luchtige content, persoonlijke verhalen, neutrale analyses",
+      "examples": ["Je werkt te hard en het werkt niet", "Waarom je strategie faalt"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "bottom-row",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3" }
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "inzicht-uit-fout",
+      "name": "Inzicht uit Fout",
+      "useWhen": "inzicht of leerproces voortgekomen uit een fout of mislukking",
+      "dontUseWhen": "succesverhalen, neutrale tips, analyses",
+      "examples": ["Wat ik leerde van mijn faillissement", "De fout die ik nooit meer maak"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "stack",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3" },
+          "decorations": [
+            { "type": "long-arrow", "x": 400, "y": 700, "scale": 0.3, "angle": 0 }
+          ]
+        },
+        { "type": "content", "content": { "title": "De Fout", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Het Inzicht", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Hoe Nu", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "trends-observatie",
+      "name": "Trends & Observaties",
+      "useWhen": "observatie over trends, marktbewegingen of veranderingen in branche",
+      "dontUseWhen": "persoonlijke reflecties, processen, lessen",
+      "examples": ["Wat ik zie in de markt", "4 trends die ondernemers raken"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "diagonal",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-4" },
+          "decorations": [
+            { "type": "long-arrow", "x": 80, "y": 720, "scale": 0.42, "angle": -15 }
+          ]
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "mini-handleiding",
+      "name": "Mini Handleiding",
+      "useWhen": "praktische handleiding hoe je iets concreet doet, in 3 fases",
+      "dontUseWhen": "reflecties, persoonlijke verhalen, mythbusting",
+      "examples": ["Hoe je strategie maakt", "Klantgesprek voorbereiden"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "pyramid",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-3-steps" },
+          "decorations": [
+            { "type": "business-svg", "asset": "widea-gouden-driehoek.svg", "x": 80, "y": 700, "scale": 0.18 }
+          ]
+        },
+        { "type": "content", "content": { "title": "Fase 1", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Fase 2", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "Fase 3", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "ondernemers-tip",
+      "name": "Ondernemers Tip",
+      "useWhen": "korte praktische tip met 4 elementen of dimensies",
+      "dontUseWhen": "lange verhalen, diepe reflecties, processen",
+      "examples": ["4 dingen om te checken in je bedrijf", "Wat elke ondernemer moet weten"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "grid",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-4" }
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    },
+    {
+      "id": "strategisch-advies",
+      "name": "Strategisch Advies",
+      "useWhen": "strategisch advies of analyse over groei, koers, beslissingen op managementniveau",
+      "dontUseWhen": "uitvoerende tips, persoonlijke verhalen, mythbusting",
+      "examples": ["Waarom je niet harder moet werken", "Strategie boven uitvoering"],
+      "slides": [
+        {
+          "type": "intro",
+          "layout": "hero",
+          "content": { "subtitle": "ai", "title": "ai", "blokken": "ai-4" },
+          "decorations": [
+            { "type": "frame-landscape", "x": 80, "y": 280, "scale": 0.95, "angle": 0 },
+            { "type": "business-svg", "asset": "widea-raket-rood.svg", "x": 720, "y": 720, "scale": 0.2 }
+          ]
+        },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "content", "content": { "title": "ai", "body": "ai-long" } },
+        { "type": "engagement", "content": { "title": "ai", "body": "ai-medium", "cta": "Like & comment" } },
+        { "type": "outro" }
+      ]
+    }
+  ]
+}

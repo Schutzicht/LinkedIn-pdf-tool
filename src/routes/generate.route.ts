@@ -9,12 +9,16 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+interface AiGenOptions {
+    postLength?: 'kort' | 'medium' | 'lang';
+}
+
 router.post('/', validateGenerate, async (req: Request, res: Response) => {
     try {
-        const { topic } = req.body as { topic: string };
-        logger.info({ topic }, 'Generate request ontvangen');
+        const { topic, options } = req.body as { topic: string; options?: AiGenOptions };
+        logger.info({ topic, options }, 'Generate request ontvangen');
 
-        const carouselData = await contentProcessor.generateCarousel(topic);
+        const carouselData = await contentProcessor.generateCarousel(topic, options);
 
         const outputDir = path.join(CONFIG.paths.output, `session-${randomUUID()}`);
         await renderer.renderCarousel(carouselData, outputDir);

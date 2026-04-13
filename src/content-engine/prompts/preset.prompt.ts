@@ -54,6 +54,10 @@ Geef ALLEEN dit JSON formaat terug:
 `.trim();
 }
 
+interface PresetFillOptions {
+    postLength?: 'kort' | 'medium' | 'lang';
+}
+
 /**
  * STAP 2: Vul de tekst-velden in voor het gekozen preset.
  * Kennisbank wordt meegegeven voor stijl-referentie.
@@ -61,8 +65,39 @@ Geef ALLEEN dit JSON formaat terug:
 export function buildPresetFillPrompt(
     topic: string,
     preset: any,
-    kennisbank: string
+    kennisbank: string,
+    options?: PresetFillOptions
 ): string {
+    // Resolve options met defaults
+    const opts: Required<PresetFillOptions> = {
+        postLength: options?.postLength || 'medium',
+    };
+
+    // STRIKTE word ranges per postLength — AI moet zich hier exact aan houden
+    // Slide bodies maximaal 40 woorden voor leesbaarheid
+    const ranges = {
+        kort: {
+            post: { min: 180, max: 240, target: 210 },
+            bodyLong: { min: 20, max: 30, target: 25 },
+            bodyMedium: { min: 12, max: 20, target: 16 },
+        },
+        medium: {
+            post: { min: 300, max: 400, target: 350 },
+            bodyLong: { min: 25, max: 35, target: 30 },
+            bodyMedium: { min: 15, max: 25, target: 20 },
+        },
+        lang: {
+            post: { min: 450, max: 550, target: 500 },
+            bodyLong: { min: 30, max: 40, target: 35 },
+            bodyMedium: { min: 20, max: 30, target: 25 },
+        },
+    }[opts.postLength];
+
+    const postWordRange = `${ranges.post.min}-${ranges.post.max}`;
+    const bodyLongRange = `${ranges.bodyLong.min}-${ranges.bodyLong.max}`;
+    const bodyMediumRange = `${ranges.bodyMedium.min}-${ranges.bodyMedium.max}`;
+    const lengthLabel = { kort: 'KORT', medium: 'MEDIUM', lang: 'LANG' }[opts.postLength];
+
     // Build a list of fields the AI needs to fill
     const fieldsToFill: string[] = [];
     const slideDescriptions: string[] = [];
@@ -102,6 +137,12 @@ ${kennisbank}
 
 **ONDERWERP:** "${topic}"
 
+**LENGTE INSTELLING:** ${lengthLabel}
+- LinkedIn post body: EXACT ${ranges.post.min} tot ${ranges.post.max} woorden (target: ~${ranges.post.target}). Tel je woorden voor je antwoordt.
+- Slide body (lang): EXACT ${ranges.bodyLong.min} tot ${ranges.bodyLong.max} woorden (target: ~${ranges.bodyLong.target})
+- Slide body (medium): EXACT ${ranges.bodyMedium.min} tot ${ranges.bodyMedium.max} woorden (target: ~${ranges.bodyMedium.target})
+DEZE LIMIETEN ZIJN HARD. NIET OVERSCHRIJDEN.
+
 **PRESET STRUCTUUR:** ${preset.name}
 ${slideDescriptions.join('\n')}
 
@@ -113,8 +154,8 @@ VELD TYPES & LIMIETEN:
 - "title" (intro): prikkelende vraag of stelling, max 10 woorden
 - "title" (content): korte krachtige conclusie, max 8 woorden
 - "title" (engagement): reflectieve vraag, max 6 woorden
-- "body" (ai-long): 80-130 woorden, 5-8 zinnen, ga de diepte in met voorbeelden en reflectie
-- "body" (ai-medium): 40-70 woorden, 3-5 zinnen
+- "body" (ai-long): ${bodyLongRange} woorden — HARDE LIMIET, niet meer dan ${ranges.bodyLong.max}
+- "body" (ai-medium): ${bodyMediumRange} woorden — HARDE LIMIET, niet meer dan ${ranges.bodyMedium.max}
 - "blokken" (ai-3): 3 woorden van max 10 letters elk, passend bij onderwerp
 - "blokken" (ai-4): 4 woorden van max 10 letters elk
 - "blokken" (ai-5): 5 woorden van max 10 letters elk
@@ -132,18 +173,18 @@ BLOKKEN REGELS:
 - Visueel onderscheidend (verschillende lengtes ok)
 - Past bij het onderwerp
 
-POSTBODY REGELS (BELANGRIJK!):
-- Schrijf 300-400 woorden — diepgaand verhaal, geen samenvatting
+POSTBODY REGELS (HARDE LIMIET ${postWordRange} WOORDEN):
 - Begin met herkenbare observatie
 - Bouw op met voorbeelden, zinnen die ademen
 - Korte alinea's, witregels tussen gedachten
 - Eindig met reflectieve vraag
 - 3-5 hashtags onderaan: #businessverbeteraars #ondernemen ...
+- ${opts.postLength === 'kort' ? 'Houd het BEKNOPT — geen lange uitweidingen.' : opts.postLength === 'lang' ? 'Neem ruim de tijd voor diepgang en meerdere voorbeelden.' : 'Vind balans tussen beknoptheid en diepgang.'}
 
 GEEF ALLEEN DIT JSON FORMAAT TERUG (geen markdown, geen uitleg):
 {
   "title": "korte interne titel",
-  "postBody": "lange LinkedIn post tekst (300-400 woorden) met hashtags",
+  "postBody": "LinkedIn post tekst van ${postWordRange} woorden met hashtags",
   "slides": [
 ${preset.slides.map((s: any, i: number) => generateSlideTemplate(s, i + 1)).join(',\n')}
   ]

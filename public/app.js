@@ -5,6 +5,49 @@
 
 let currentCarouselData = null;
 
+// ── AI Generation Options ───────────────────────────────────────
+const aiOptions = {
+    postLength: 'medium',  // kort | medium | lang
+};
+
+function toggleAiOptions() {
+    const body = document.getElementById('aiOptionsBody');
+    const toggle = document.querySelector('.ai-options-toggle');
+    if (body.style.display === 'none') {
+        body.style.display = 'flex';
+        toggle.classList.add('open');
+    } else {
+        body.style.display = 'none';
+        toggle.classList.remove('open');
+    }
+}
+
+function setupAiOptions() {
+    document.querySelectorAll('.opt-pills').forEach(group => {
+        group.addEventListener('click', (e) => {
+            const pill = e.target.closest('.opt-pill');
+            if (!pill) return;
+            const opt = group.dataset.opt;
+            const value = pill.dataset.value;
+            group.querySelectorAll('.opt-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            aiOptions[opt] = value;
+            updateOptionsSummary();
+        });
+    });
+    updateOptionsSummary();
+}
+
+function updateOptionsSummary() {
+    const labels = { kort: 'Kort', medium: 'Medium', lang: 'Lang' };
+    const summaryEl = document.getElementById('aiOptionsSummary');
+    if (summaryEl) {
+        summaryEl.textContent = labels[aiOptions.postLength] || 'Medium';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', setupAiOptions);
+
 // --- Toast Notifications ---
 function showToast(message, type = 'success') {
     const existing = document.querySelector('.toast');
@@ -52,7 +95,7 @@ async function generateCarousel() {
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic }),
+            body: JSON.stringify({ topic, options: aiOptions }),
         });
 
         const result = await response.json();

@@ -43,6 +43,13 @@ export const CONFIG = {
         model: process.env.AI_MODEL || 'gemini-2.0-flash-lite',
         temperature: 0.7,
     },
+    groq: {
+        apiKey: process.env.GROQ_API_KEY || '',
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        // Max chars voor input — moet ruim onder TPM limiet blijven
+        // 12k TPM ≈ 36k chars, we houden 18k aan om buffer te hebben voor output
+        maxInputChars: 18000,
+    },
     paths: {
         output: path.resolve(__dirname, '..', 'output'),
     },

@@ -168,6 +168,111 @@ body {
 }
 .topic-input::placeholder { color: #b0b8c4; }
 
+/* AI Options collapsible */
+.ai-options {
+    margin-top: 12px;
+    border-top: 1px solid #f0f2f5;
+    padding-top: 12px;
+}
+.ai-options-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.ai-options-toggle svg { color: #94a3b8; }
+.ai-options-toggle.open svg { transform: rotate(90deg); }
+.ai-options-summary {
+    margin-left: auto;
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+}
+.ai-options-body {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.opt-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.opt-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.opt-pills {
+    display: flex;
+    gap: 4px;
+    background: #f4f6f9;
+    padding: 3px;
+    border-radius: 8px;
+}
+.opt-pill {
+    flex: 1;
+    padding: 7px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #64748b;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+}
+.opt-pill:hover { background: rgba(0,129,198,0.06); color: #0081C6; }
+.opt-pill.active {
+    background: #fff;
+    color: #0081C6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.opt-meta {
+    font-size: 9px;
+    color: #b0b8c4;
+    font-weight: 500;
+    margin-top: 1px;
+}
+.opt-pill.active .opt-meta { color: #94a3b8; }
+.opt-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #e8ecf0;
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: #475569;
+    background: #fafbfc;
+    transition: border-color 0.15s;
+}
+.opt-input:focus {
+    outline: none;
+    border-color: #0081C6;
+    background: #fff;
+}
+.opt-input::placeholder { color: #b0b8c4; }
+
 .btn-row-generate {
     display: flex;
     gap: 10px;

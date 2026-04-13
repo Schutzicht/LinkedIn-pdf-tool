@@ -8,6 +8,10 @@ import presetsData from './presets.json';
 import { logger } from '../utils/logger';
 import { z } from 'zod';
 
+export interface GenerateOptions {
+    postLength?: 'kort' | 'medium' | 'lang';
+}
+
 // --- Zod schema voor AI response validatie ---
 const SlideContentSchema = z.object({
     title: z.string().optional(),
@@ -111,16 +115,90 @@ export class ContentProcessor {
         }
     }
 
+    /**
+     * Roep AI aan met automatische fallback naar Groq als Gemini faalt.
+     * Probeert eerst Gemini; bij elke fout (rate limit, server error, etc.)
+     * valt het terug op Groq als die geconfigureerd is.
+     */
     private async callAI(prompt: string): Promise<string> {
-        const result = await this.model.generateContent(prompt);
-        return result.response.text();
+        // Stap 1: probeer Gemini als die geconfigureerd is
+        if (CONFIG.ai.apiKey) {
+            try {
+                const result = await this.model.generateContent(prompt);
+                return result.response.text();
+            } catch (err) {
+                logger.warn({ err: err instanceof Error ? err.message : err }, 'Gemini call mislukt — fallback naar Groq');
+                if (!CONFIG.groq.apiKey) {
+                    throw err; // geen Groq beschikbaar, gooi originele error
+                }
+            }
+        }
+
+        // Stap 2: fallback naar Groq (OpenAI-compatible API)
+        if (!CONFIG.groq.apiKey) {
+            throw new Error('Geen AI provider beschikbaar — stel GEMINI_API_KEY of GROQ_API_KEY in via .env');
+        }
+
+        // Kap prompt af voor Groq's TPM limiet
+        // De grootste kostenpost is de kennisbank — vervang die door een korte stijlsamenvatting
+        let groqPrompt = prompt;
+        const maxChars = CONFIG.groq.maxInputChars;
+
+        if (prompt.length > maxChars) {
+            // Strategie 1: vervang kennisbank door korte stijlnotitie
+            const kennisbankShort = 'Schrijf in Jeroens stijl: nuchter, direct, reflectief. Begin met een herkenbare observatie. Gebruik "Nee: ..." om aannames te corrigeren. Mix korte en lange zinnen. Stel retorische vragen. Vermijd clickbait, superlatieven en grof taalgebruik.';
+            // Vind kennisbank-block en vervang
+            groqPrompt = prompt.replace(
+                /\*\*REFERENTIEMATERIAAL[\s\S]*?(?=\n\n\*\*[A-Z])/,
+                `**REFERENTIEMATERIAAL — STIJLNOTITIE:**\n${kennisbankShort}\n\n`
+            );
+
+            // Strategie 2: als nog steeds te groot, hard afkappen
+            if (groqPrompt.length > maxChars) {
+                const headSize = 800;
+                const tailSize = 1500;
+                const middleSize = maxChars - headSize - tailSize - 100;
+                const head = groqPrompt.slice(0, headSize);
+                const tail = groqPrompt.slice(-tailSize);
+                const middle = groqPrompt.slice(headSize, headSize + middleSize);
+                groqPrompt = `${head}${middle}\n[...]\n${tail}`;
+            }
+            logger.warn({ originalLen: prompt.length, truncatedLen: groqPrompt.length }, 'Prompt ingekort voor Groq');
+        }
+
+        logger.info({ model: CONFIG.groq.model, promptLen: groqPrompt.length }, 'Groq fallback wordt aangeroepen');
+        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${CONFIG.groq.apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: CONFIG.groq.model,
+                messages: [{ role: 'user', content: groqPrompt }],
+                temperature: CONFIG.ai.temperature,
+                response_format: { type: 'json_object' },
+            }),
+        });
+
+        if (!groqResponse.ok) {
+            const errText = await groqResponse.text();
+            throw new Error(`Groq API fout: ${groqResponse.status} ${errText}`);
+        }
+
+        const groqData = await groqResponse.json() as { choices: Array<{ message: { content: string } }> };
+        const text = groqData.choices?.[0]?.message?.content;
+        if (!text) {
+            throw new Error('Groq response bevatte geen tekst');
+        }
+        return text;
     }
 
-    async generateCarousel(topic: string): Promise<CarouselData> {
-        logger.info({ topic, model: CONFIG.ai.model }, 'Carousel genereren via preset flow');
+    async generateCarousel(topic: string, options?: GenerateOptions): Promise<CarouselData> {
+        logger.info({ topic, model: CONFIG.ai.model, options }, 'Carousel genereren via preset flow');
 
-        if (!CONFIG.ai.apiKey) {
-            throw new Error('API Key ontbreekt — stel GEMINI_API_KEY in via .env');
+        if (!CONFIG.ai.apiKey && !CONFIG.groq.apiKey) {
+            throw new Error('Geen API key — stel GEMINI_API_KEY of GROQ_API_KEY in via .env');
         }
 
         const kennisbank = await this.getKennisbankContent();
@@ -157,7 +235,7 @@ export class ContentProcessor {
         if (!preset) throw new Error(`Preset niet gevonden: ${selectedPresetId}`);
 
         // ── STAP 2: Vul preset velden in ──
-        const fillPrompt = buildPresetFillPrompt(topic, preset, kennisbank);
+        const fillPrompt = buildPresetFillPrompt(topic, preset, kennisbank, options);
 
         let lastError: unknown;
         for (let attempt = 1; attempt <= 2; attempt++) {

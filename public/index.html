@@ -46,6 +46,29 @@
                 </div>
                 <div class="input-card-body">
                     <textarea id="topicInput" class="topic-input" placeholder="Bijvoorbeeld: Waarom ondernemers bang zijn om te groeien..." rows="4"></textarea>
+
+                    <!-- AI Opties (collapsible) -->
+                    <div class="ai-options">
+                        <button type="button" class="ai-options-toggle" onclick="toggleAiOptions()">
+                            <svg id="aiOptionsChevron" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <span>Opties</span>
+                            <span class="ai-options-summary" id="aiOptionsSummary">Standaard</span>
+                        </button>
+                        <div class="ai-options-body" id="aiOptionsBody" style="display:none;">
+
+                            <!-- Post lengte -->
+                            <div class="opt-row">
+                                <label class="opt-label">Post lengte</label>
+                                <div class="opt-pills" data-opt="postLength">
+                                    <button type="button" class="opt-pill" data-value="kort">Kort<span class="opt-meta">~200w</span></button>
+                                    <button type="button" class="opt-pill active" data-value="medium">Medium<span class="opt-meta">~350w</span></button>
+                                    <button type="button" class="opt-pill" data-value="lang">Lang<span class="opt-meta">~500w</span></button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
                     <div class="btn-row-generate">
                         <button id="generateBtn" onclick="generateCarousel()" class="btn-generate">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">

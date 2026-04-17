@@ -37,7 +37,9 @@ const BRAND = {
     engagementBg: '#A8D4E6',       // Light blue bg for engagement slides
 };
 
-const FONT_MAIN = 'Outfit';
+// Verb font (Widea huisstijl), geladen via @font-face in input.css
+// Light gewicht (300-500) voor body, CondRegular (600-900) voor titels/bold
+const FONT_MAIN = 'Verb';
 const FONT_HAND = 'Caveat';
 
 // The single paper background image used on ALL slides
@@ -155,8 +157,13 @@ function autoFitTextbox(textbox, maxHeight, boldStart, boldEnd, baseFontSize, ti
 
 async function ensureFontsLoaded() {
     try {
-        await document.fonts.load('300 42px "Outfit"');
-        await document.fonts.load('800 52px "Outfit"');
+        // Verb light (300-500) — voor body tekst
+        await document.fonts.load('300 42px "Verb"');
+        await document.fonts.load('italic 300 42px "Verb"');
+        // Verb cond regular (600-900) — voor titels
+        await document.fonts.load('800 52px "Verb"');
+        await document.fonts.load('italic 800 52px "Verb"');
+        // Caveat handschrift
         await document.fonts.load('700 28px "Caveat"');
     } catch (e) {
         console.warn('Font preload failed, continuing anyway:', e);
@@ -2156,6 +2163,56 @@ class SlideCanvasEditor {
         if (this.activeSlideIndex >= 0 && this.activeSlideIndex < this.slideObjects.length) {
             this.slideObjects[this.activeSlideIndex] = this.fabricCanvas.getObjects().slice();
         }
+    }
+
+    /**
+     * Exporteer alle slide objects per slide als serializeerbare JSON.
+     * Wordt door auto-save gebruikt om browser-state te bewaren.
+     */
+    exportAllSlideObjects() {
+        this._saveCurrentSlide();
+        const result = [];
+        for (let s = 0; s < this.slideObjects.length; s++) {
+            const objs = this.slideObjects[s] || [];
+            const exported = objs.map(obj => obj.toJSON(['layerName', 'layerLocked', 'layerVisible']));
+            result.push(exported);
+        }
+        return result;
+    }
+
+    /**
+     * Importeer eerder geëxporteerde slide objects en plaats ze op de canvas.
+     * Wordt gebruikt om een opgeslagen project te herstellen.
+     */
+    async importAllSlideObjects(serializedSlides) {
+        if (!Array.isArray(serializedSlides)) return;
+        this.suppressHistory = true;
+
+        for (let s = 0; s < serializedSlides.length && s < this.slideObjects.length; s++) {
+            const serializedObjs = serializedSlides[s];
+            const restored = [];
+            for (const objJSON of serializedObjs) {
+                try {
+                    const obj = await new Promise((resolve) => {
+                        fabric.util.enlivenObjects([objJSON], (objs) => resolve(objs[0]));
+                    });
+                    if (obj) restored.push(obj);
+                } catch (e) {
+                    console.warn('Kon object niet herstellen:', e);
+                }
+            }
+            if (restored.length > 0) {
+                this.slideObjects[s] = restored;
+            }
+        }
+
+        // Re-render huidige slide
+        if (this.activeSlideIndex >= 0) {
+            const idx = this.activeSlideIndex;
+            this.activeSlideIndex = -1;
+            this.switchToSlide(idx);
+        }
+        this.suppressHistory = false;
     }
 
     // ── Layer Panel ─────────────────────────────────────────────────

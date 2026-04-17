@@ -10,6 +10,7 @@ import { logger } from './utils/logger';
 import generateRoute from './routes/generate.route';
 import renderRoute from './routes/render.route';
 import debugRoute from './routes/debug.route';
+import projectsRoute from './routes/projects.route';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -48,6 +49,7 @@ app.use('/output', express.static(CONFIG.paths.output));
 // --- Routes ---
 app.use('/api/generate', generateLimiter, generateRoute);
 app.use('/api/render', renderRoute);
+app.use('/api/projects', projectsRoute);
 app.use('/api', debugRoute);
 
 // --- Health check (toont of env vars goed staan) ---

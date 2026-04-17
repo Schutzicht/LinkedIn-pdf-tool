@@ -5,6 +5,283 @@
 
 let currentCarouselData = null;
 
+// ── Auto-save naar localStorage ────────────────────────────────
+const STORAGE_KEY = 'bv_carousel_autosave';
+const STORAGE_TIMESTAMP_KEY = 'bv_carousel_autosave_ts';
+let autoSaveTimer = null;
+
+function saveProject() {
+    if (!currentCarouselData) return;
+    try {
+        const payload = {
+            carouselData: currentCarouselData,
+            topic: document.getElementById('topicInput')?.value || '',
+            postBody: document.getElementById('postBodyOutput')?.value || '',
+            options: aiOptions,
+            // Per slide: object positions/properties (vanaf canvas)
+            slideObjects: editor ? editor.exportAllSlideObjects?.() : null,
+            savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        localStorage.setItem(STORAGE_TIMESTAMP_KEY, payload.savedAt);
+    } catch (e) {
+        console.warn('Kon project niet opslaan:', e);
+    }
+}
+
+function getSavedProject() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        return null;
+    }
+}
+
+function clearSavedProject() {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_TIMESTAMP_KEY);
+}
+
+function startAutoSave() {
+    if (autoSaveTimer) clearInterval(autoSaveTimer);
+    autoSaveTimer = setInterval(saveProject, 5000); // elke 5 sec
+}
+
+function stopAutoSave() {
+    if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
+        autoSaveTimer = null;
+    }
+}
+
+// Save ook bij elke canvas-wijziging (debounced)
+let saveDebounceTimer = null;
+function scheduleSave() {
+    if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+    saveDebounceTimer = setTimeout(saveProject, 1000);
+}
+
+// Save bij browser sluiten/refresh
+window.addEventListener('beforeunload', () => {
+    if (currentCarouselData) saveProject();
+});
+
+// Bij page load: check of er een opgeslagen project is en vraag of restoren
+async function checkRestoreOnLoad() {
+    const saved = getSavedProject();
+    if (!saved || !saved.carouselData) return;
+
+    const savedDate = new Date(saved.savedAt);
+    const minutesAgo = Math.round((Date.now() - savedDate.getTime()) / 60000);
+    let timeText;
+    if (minutesAgo < 1) timeText = 'zojuist';
+    else if (minutesAgo < 60) timeText = `${minutesAgo} minuten geleden`;
+    else if (minutesAgo < 1440) timeText = `${Math.round(minutesAgo / 60)} uur geleden`;
+    else timeText = `${Math.round(minutesAgo / 1440)} dagen geleden`;
+
+    const topicPreview = (saved.topic || '').slice(0, 60) || 'Eerder werk';
+    const ok = confirm(
+        `📂 Eerder werk gevonden\n\n` +
+        `"${topicPreview}"\n` +
+        `Opgeslagen ${timeText}.\n\n` +
+        `Wil je dit project terug laden?`
+    );
+
+    if (ok) {
+        await restoreProject(saved);
+    } else {
+        clearSavedProject();
+    }
+}
+
+async function restoreProject(saved) {
+    try {
+        currentCarouselData = saved.carouselData;
+        if (saved.topic) {
+            const topicEl = document.getElementById('topicInput');
+            if (topicEl) topicEl.value = saved.topic;
+        }
+        if (saved.options) {
+            Object.assign(aiOptions, saved.options);
+            // Update active pills
+            document.querySelectorAll('.opt-pills').forEach(group => {
+                const opt = group.dataset.opt;
+                const val = aiOptions[opt];
+                group.querySelectorAll('.opt-pill').forEach(p => {
+                    p.classList.toggle('active', p.dataset.value === val);
+                });
+            });
+            updateOptionsSummary();
+        }
+
+        if (!editor) initCanvasEditor();
+        await editor.loadSlides(currentCarouselData);
+
+        // Restore object positions per slide if present
+        if (saved.slideObjects && editor.importAllSlideObjects) {
+            editor.importAllSlideObjects(saved.slideObjects);
+        }
+
+        // Show UI
+        document.getElementById('emptyState')?.classList.add('hidden');
+        document.getElementById('canvasEditorSection')?.classList.remove('hidden');
+        document.getElementById('editorSection')?.classList.remove('hidden');
+        document.getElementById('postSection')?.classList.remove('hidden');
+
+        if (saved.postBody) {
+            const postEl = document.getElementById('postBodyOutput');
+            if (postEl) postEl.value = saved.postBody;
+        }
+
+        renderEditor(currentCarouselData.slides);
+        startAutoSave();
+        showToast('Project hersteld');
+    } catch (e) {
+        console.error('Restore mislukt:', e);
+        showToast('Kon project niet herstellen', 'error');
+    }
+}
+
+// Run restore check after DOM ready (localStorage + URL project)
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(checkRestoreOnLoad, 500);
+});
+
+// ── Cloud opslag (Supabase) ────────────────────────────────────
+let currentProjectId = null;
+let currentAccessToken = null;
+
+async function saveToCloud() {
+    if (!currentCarouselData) {
+        showToast('Niets om op te slaan', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btnSaveCloud');
+    if (btn) btn.textContent = 'Opslaan...';
+
+    try {
+        const payload = {
+            name: document.getElementById('topicInput')?.value?.slice(0, 60) || 'Naamloos',
+            topic: document.getElementById('topicInput')?.value || '',
+            carouselData: currentCarouselData,
+            postBody: document.getElementById('postBodyOutput')?.value || '',
+            slideObjects: editor ? editor.exportAllSlideObjects?.() : null,
+            options: aiOptions,
+            presetId: currentCarouselData?.metadata?.presetId || null,
+        };
+
+        let result;
+
+        if (currentProjectId && currentAccessToken) {
+            // Update bestaand project
+            payload.accessToken = currentAccessToken;
+            const res = await fetch(`/api/projects/${currentProjectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            result = await res.json();
+        } else {
+            // Nieuw project aanmaken
+            const res = await fetch('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            result = await res.json();
+
+            if (result.success) {
+                currentProjectId = result.projectId;
+                currentAccessToken = result.accessToken;
+                // Sla project ref op in localStorage zodat we het kunnen restoren
+                localStorage.setItem('bv_cloud_project_id', currentProjectId);
+                localStorage.setItem('bv_cloud_access_token', currentAccessToken);
+                // Update URL zodat hij deelbaar is
+                window.history.replaceState(null, '', `?project=${currentProjectId}&token=${currentAccessToken}`);
+            }
+        }
+
+        if (result.success) {
+            showToast('Project opgeslagen in de cloud');
+        } else {
+            throw new Error(result.error || 'Opslaan mislukt');
+        }
+    } catch (e) {
+        console.error('Cloud save error:', e);
+        showToast('Kon niet opslaan: ' + (e.message || e), 'error');
+    } finally {
+        if (btn) btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg><span class="btn-tool-label">Opslaan</span>';
+    }
+}
+
+async function loadFromCloud(projectId, token) {
+    try {
+        const res = await fetch(`/api/projects/${projectId}?token=${token}`);
+        const data = await res.json();
+
+        if (!data.success || !data.project) {
+            throw new Error(data.error || 'Project niet gevonden');
+        }
+
+        const project = data.project;
+        currentProjectId = projectId;
+        currentAccessToken = token;
+        currentCarouselData = project.carouselData;
+
+        localStorage.setItem('bv_cloud_project_id', projectId);
+        localStorage.setItem('bv_cloud_access_token', token);
+
+        if (project.topic) {
+            const topicEl = document.getElementById('topicInput');
+            if (topicEl) topicEl.value = project.topic;
+        }
+        if (project.options) {
+            Object.assign(aiOptions, project.options);
+            updateOptionsSummary();
+        }
+
+        if (!editor) initCanvasEditor();
+        await editor.loadSlides(currentCarouselData);
+
+        if (project.slideObjects && editor.importAllSlideObjects) {
+            await editor.importAllSlideObjects(project.slideObjects);
+        }
+
+        document.getElementById('emptyState')?.classList.add('hidden');
+        document.getElementById('canvasEditorSection')?.classList.remove('hidden');
+        document.getElementById('editorSection')?.classList.remove('hidden');
+        document.getElementById('postSection')?.classList.remove('hidden');
+
+        if (project.postBody) {
+            const postEl = document.getElementById('postBodyOutput');
+            if (postEl) postEl.value = project.postBody;
+        }
+
+        renderEditor(currentCarouselData.slides);
+        startAutoSave();
+
+        window.history.replaceState(null, '', `?project=${projectId}&token=${token}`);
+        showToast('Project geladen uit de cloud');
+    } catch (e) {
+        console.error('Cloud load error:', e);
+        showToast('Kon project niet laden: ' + (e.message || e), 'error');
+    }
+}
+
+// Check URL params bij page load voor cloud project link
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('project');
+    const token = params.get('token');
+    if (projectId && token) {
+        // Cloud project in URL → laad dat (overschrijft localStorage restore)
+        setTimeout(() => loadFromCloud(projectId, token), 600);
+    }
+});
+
 // ── AI Generation Options ───────────────────────────────────────
 const aiOptions = {
     postLength: 'medium',  // kort | medium | lang
@@ -123,6 +400,10 @@ async function generateCarousel() {
             // Build text editor
             renderEditor(result.data.slides);
 
+            // Start auto-save voor dit project
+            startAutoSave();
+            saveProject(); // direct opslaan
+
             showToast('Carousel gegenereerd!');
 
             // On mobile: auto-switch to canvas view
@@ -223,6 +504,10 @@ async function startManual() {
 
     document.getElementById('postBodyOutput').value = '';
     renderEditor(currentCarouselData.slides);
+
+    // Start auto-save
+    startAutoSave();
+    saveProject();
 
     showToast('Handmatige modus — vul je eigen teksten in');
 

@@ -22,6 +22,48 @@ export class VisualRenderer {
         const templatePath = path.join(__dirname, 'templates', 'template.html');
         this.templateHtml = await fs.readFile(templatePath, 'utf8');
 
+        // Verb font inline base64 inbouwen — Puppeteer kan geen relatieve paths laden
+        try {
+            const fontsDir = path.join(__dirname, '..', '..', 'public', 'assets', 'fonts');
+            const verbLight = (await fs.readFile(path.join(fontsDir, 'verb-light.woff'))).toString('base64');
+            const verbLightItalic = (await fs.readFile(path.join(fontsDir, 'verb-light-italic.woff'))).toString('base64');
+            const verbCond = (await fs.readFile(path.join(fontsDir, 'verb-cond-regular.woff'))).toString('base64');
+            const verbCondItalic = (await fs.readFile(path.join(fontsDir, 'verb-cond-regular-italic.woff'))).toString('base64');
+
+            const verbFontFace = `
+        <style>
+            @font-face {
+                font-family: 'Verb';
+                src: url(data:font/woff;base64,${verbLight}) format('woff');
+                font-weight: 300 500;
+                font-style: normal;
+            }
+            @font-face {
+                font-family: 'Verb';
+                src: url(data:font/woff;base64,${verbLightItalic}) format('woff');
+                font-weight: 300 500;
+                font-style: italic;
+            }
+            @font-face {
+                font-family: 'Verb';
+                src: url(data:font/woff;base64,${verbCond}) format('woff');
+                font-weight: 600 900;
+                font-style: normal;
+            }
+            @font-face {
+                font-family: 'Verb';
+                src: url(data:font/woff;base64,${verbCondItalic}) format('woff');
+                font-weight: 600 900;
+                font-style: italic;
+            }
+        </style>`;
+            // Injecteer net na <head>
+            this.templateHtml = this.templateHtml.replace('<head>', '<head>' + verbFontFace);
+            logger.info('Verb font ingebed in render-template');
+        } catch (e) {
+            logger.warn({ err: e }, 'Verb font kon niet ingeladen worden — Puppeteer gebruikt fallback');
+        }
+
         const launchOptions: LaunchOptions = {
             args: [
                 '--no-sandbox',

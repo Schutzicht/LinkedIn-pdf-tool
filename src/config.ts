@@ -20,7 +20,7 @@ export const BRAND = {
         background: '#E5E5E5',  // Canvas achtergrond
     },
     fonts: {
-        main: '"Outfit", "Segoe UI", Helvetica, Arial, sans-serif',
+        main: '"Verb", "Segoe UI", Helvetica, Arial, sans-serif',
         accent: '"Caveat", cursive',
     },
     layout: {

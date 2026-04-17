@@ -1,12 +1,46 @@
 @import "tailwindcss";
 
+/* ── Verb font (Widea huisstijl) ── */
+@font-face {
+    font-family: 'Verb';
+    src: url('/assets/fonts/verb-light.woff') format('woff'),
+         url('/assets/fonts/verb-light.ttf') format('truetype');
+    font-weight: 300 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Verb';
+    src: url('/assets/fonts/verb-light-italic.woff') format('woff'),
+         url('/assets/fonts/verb-light-italic.ttf') format('truetype');
+    font-weight: 300 500;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Verb';
+    src: url('/assets/fonts/verb-cond-regular.woff') format('woff'),
+         url('/assets/fonts/verb-cond-regular.ttf') format('truetype');
+    font-weight: 600 900;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Verb';
+    src: url('/assets/fonts/verb-cond-regular-italic.woff') format('woff'),
+         url('/assets/fonts/verb-cond-regular-italic.ttf') format('truetype');
+    font-weight: 600 900;
+    font-style: italic;
+    font-display: swap;
+}
+
 @theme {
     --color-primary: #10366b;
     --color-secondary: #0081C6;
     --color-accent: #f36b00;
     --color-bg: #f4f6f9;
     --color-surface: #ffffff;
-    --font-sans: 'Outfit', sans-serif;
+    --font-sans: 'Verb', 'Mulish', sans-serif;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -14,7 +48,7 @@
    ═══════════════════════════════════════════════════ */
 
 body {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Verb', 'Mulish', sans-serif;
     background: var(--color-bg);
     margin: 0;
     min-height: 100dvh;

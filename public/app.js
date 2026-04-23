@@ -158,58 +158,136 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentProjectId = null;
 let currentAccessToken = null;
 
-// ── Vorige ontwerpen (localStorage) ────────────────────────────
-const PROJECTS_HISTORY_KEY = 'bv_cloud_projects_list';
-const PROJECTS_HISTORY_MAX = 25;
+// ── Owner-auth (single-tenant password) ────────────────────────
+const OWNER_TOKEN_KEY = 'bv_owner_token';
 
-function loadProjectsHistory() {
+function getOwnerToken() {
+    try { return localStorage.getItem(OWNER_TOKEN_KEY) || ''; } catch (_) { return ''; }
+}
+
+function setOwnerToken(token) {
     try {
-        const raw = localStorage.getItem(PROJECTS_HISTORY_KEY);
-        if (!raw) return [];
-        const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr : [];
+        if (token) localStorage.setItem(OWNER_TOKEN_KEY, token);
+        else localStorage.removeItem(OWNER_TOKEN_KEY);
+    } catch (_) {}
+}
+
+function authHeaders() {
+    const t = getOwnerToken();
+    return t ? { 'x-owner-token': t } : {};
+}
+
+async function verifyOwnerToken(token) {
+    try {
+        const res = await fetch('/api/projects/verify', {
+            headers: { 'x-owner-token': token },
+        });
+        return res.ok;
     } catch (_) {
-        return [];
+        return false;
     }
 }
 
-function saveProjectsHistory(list) {
+async function ensureOwnerLogin() {
+    const existing = getOwnerToken();
+    if (existing && await verifyOwnerToken(existing)) return true;
+    if (existing) setOwnerToken(''); // opgeslagen token werkt niet meer
+    return showLoginModal();
+}
+
+function showLoginModal() {
+    return new Promise((resolve) => {
+        const existing = document.getElementById('ownerLoginModal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'ownerLoginModal';
+        modal.className = 'login-modal';
+        modal.innerHTML = `
+            <div class="login-card">
+                <h2 class="login-title">Inloggen</h2>
+                <p class="login-subtitle">Voer je wachtwoord in om bij je projecten te komen.</p>
+                <form id="loginForm" autocomplete="off">
+                    <input type="password" id="loginPassword" class="login-input" placeholder="Wachtwoord" autocomplete="current-password" required>
+                    <div id="loginError" class="login-error"></div>
+                    <button type="submit" class="login-btn">Inloggen</button>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const form = modal.querySelector('#loginForm');
+        const input = modal.querySelector('#loginPassword');
+        const errEl = modal.querySelector('#loginError');
+        const btn = modal.querySelector('.login-btn');
+        setTimeout(() => input.focus(), 50);
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errEl.textContent = '';
+            btn.disabled = true;
+            btn.textContent = 'Controleren...';
+            const token = input.value.trim();
+            const ok = token && await verifyOwnerToken(token);
+            if (ok) {
+                setOwnerToken(token);
+                modal.remove();
+                resolve(true);
+            } else {
+                errEl.textContent = 'Verkeerd wachtwoord';
+                btn.disabled = false;
+                btn.textContent = 'Inloggen';
+                input.select();
+            }
+        });
+    });
+}
+
+function logoutOwner() {
+    if (!confirm('Uitloggen? Je blijft je projecten in de cloud behouden, maar moet opnieuw inloggen.')) return;
+    setOwnerToken('');
+    window.location.reload();
+}
+
+// ── Vorige ontwerpen (server-side lijst) ───────────────────────
+let recentProjectsCache = [];
+
+async function fetchRecentProjects() {
     try {
-        localStorage.setItem(PROJECTS_HISTORY_KEY, JSON.stringify(list));
+        const res = await fetch('/api/projects', { headers: authHeaders() });
+        if (res.status === 401) {
+            recentProjectsCache = [];
+            renderRecentProjects();
+            await ensureOwnerLogin();
+            return fetchRecentProjects();
+        }
+        const data = await res.json();
+        if (data.success && Array.isArray(data.projects)) {
+            recentProjectsCache = data.projects;
+            renderRecentProjects();
+        }
     } catch (e) {
-        console.warn('Kon projectenlijst niet opslaan:', e);
+        console.warn('Kon vorige ontwerpen niet laden:', e);
     }
 }
 
-function addProjectToHistory(entry) {
-    if (!entry || !entry.projectId || !entry.accessToken) return;
-    const list = loadProjectsHistory();
-    const existing = list.findIndex(p => p.projectId === entry.projectId);
-    const record = {
-        projectId: entry.projectId,
-        accessToken: entry.accessToken,
-        name: entry.name || entry.topic || 'Naamloos',
-        topic: entry.topic || '',
-        updatedAt: new Date().toISOString(),
-    };
-    if (existing >= 0) list.splice(existing, 1);
-    list.unshift(record);
-    while (list.length > PROJECTS_HISTORY_MAX) list.pop();
-    saveProjectsHistory(list);
-    renderRecentProjects();
-}
-
-function removeProjectFromHistory(projectId) {
-    const list = loadProjectsHistory().filter(p => p.projectId !== projectId);
-    saveProjectsHistory(list);
-    renderRecentProjects();
-}
-
-function clearProjectsHistory() {
-    if (!confirm('Alle vorige ontwerpen uit deze browser verwijderen?\n(Je cloud-opslag blijft bestaan — je kunt ze later via de deelbare link terughalen.)')) return;
-    localStorage.removeItem(PROJECTS_HISTORY_KEY);
-    renderRecentProjects();
-    showToast('Lijst gewist');
+async function deleteProjectFromCloud(projectId) {
+    if (!confirm('Dit project definitief verwijderen?\nKan niet ongedaan worden gemaakt.')) return;
+    try {
+        const res = await fetch(`/api/projects/${projectId}`, {
+            method: 'DELETE',
+            headers: authHeaders(),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Verwijderen mislukt');
+        }
+        recentProjectsCache = recentProjectsCache.filter(p => p.projectId !== projectId);
+        renderRecentProjects();
+        showToast('Project verwijderd');
+    } catch (e) {
+        showToast('Kon niet verwijderen: ' + (e.message || e), 'error');
+    }
 }
 
 function formatRelativeTime(iso) {
@@ -239,33 +317,31 @@ function renderRecentProjects() {
     const list = document.getElementById('recentProjectsList');
     if (!wrapper || !list) return;
 
-    const history = loadProjectsHistory();
-    if (history.length === 0) {
+    if (!recentProjectsCache || recentProjectsCache.length === 0) {
         wrapper.classList.add('hidden');
         list.innerHTML = '';
         return;
     }
 
     wrapper.classList.remove('hidden');
-    list.innerHTML = history.map(p => `
+    list.innerHTML = recentProjectsCache.map(p => `
         <button type="button" class="recent-item" data-project-id="${escapeHtml(p.projectId)}" data-access-token="${escapeHtml(p.accessToken)}">
             <div class="recent-item-main">
-                <div class="recent-item-name">${escapeHtml(p.name)}</div>
+                <div class="recent-item-name">${escapeHtml(p.name || p.topic || 'Naamloos')}</div>
                 <div class="recent-item-meta"><span>${escapeHtml(formatRelativeTime(p.updatedAt))}</span></div>
             </div>
-            <span class="recent-item-remove" data-remove="${escapeHtml(p.projectId)}" title="Verwijder uit lijst">
+            <span class="recent-item-remove" data-remove="${escapeHtml(p.projectId)}" title="Project verwijderen">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </span>
         </button>
     `).join('');
 
-    // Wire handlers (event delegation)
     list.querySelectorAll('.recent-item').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const removeBtn = e.target.closest('[data-remove]');
             if (removeBtn) {
                 e.stopPropagation();
-                removeProjectFromHistory(removeBtn.dataset.remove);
+                deleteProjectFromCloud(removeBtn.dataset.remove);
                 return;
             }
             const id = btn.dataset.projectId;
@@ -275,8 +351,14 @@ function renderRecentProjects() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    renderRecentProjects();
+// Legacy: behoudt oude onclick handler in HTML header, verwijst naar de nieuwe flow
+function clearProjectsHistory() {
+    logoutOwner();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await ensureOwnerLogin();
+    fetchRecentProjects();
 });
 
 async function saveToCloud() {
@@ -306,7 +388,7 @@ async function saveToCloud() {
             payload.accessToken = currentAccessToken;
             const res = await fetch(`/api/projects/${currentProjectId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
                 body: JSON.stringify(payload),
             });
             result = await res.json();
@@ -314,7 +396,7 @@ async function saveToCloud() {
             // Nieuw project aanmaken
             const res = await fetch('/api/projects', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
                 body: JSON.stringify(payload),
             });
             result = await res.json();
@@ -331,12 +413,7 @@ async function saveToCloud() {
         }
 
         if (result.success) {
-            addProjectToHistory({
-                projectId: currentProjectId,
-                accessToken: currentAccessToken,
-                name: payload.name,
-                topic: payload.topic,
-            });
+            fetchRecentProjects(); // ververs server-lijst op de achtergrond
             showToast('Project opgeslagen in de cloud');
         } else {
             throw new Error(result.error || 'Opslaan mislukt');
@@ -351,7 +428,9 @@ async function saveToCloud() {
 
 async function loadFromCloud(projectId, token) {
     try {
-        const res = await fetch(`/api/projects/${projectId}?token=${token}`);
+        const res = await fetch(`/api/projects/${projectId}?token=${encodeURIComponent(token)}`, {
+            headers: authHeaders(),
+        });
         const data = await res.json();
 
         if (!data.success || !data.project) {
@@ -396,14 +475,6 @@ async function loadFromCloud(projectId, token) {
         startAutoSave();
 
         window.history.replaceState(null, '', `?project=${projectId}&token=${token}`);
-
-        addProjectToHistory({
-            projectId,
-            accessToken: token,
-            name: project.name,
-            topic: project.topic,
-        });
-
         showToast('Project geladen uit de cloud');
     } catch (e) {
         console.error('Cloud load error:', e);

@@ -5,7 +5,8 @@
   "main": "dist/server.js",
   "scripts": {
     "build:css": "tailwindcss -i ./public/src/input.css -o ./public/styles.css --minify",
-    "build:assets": "cp -r src/visual-engine/templates dist/visual-engine/templates && cp -f src/content-engine/jeroen-kennisbank.txt dist/content-engine/jeroen-kennisbank.txt 2>/dev/null || true && cp -f src/content-engine/presets.json dist/content-engine/presets.json 2>/dev/null || true",
+    "build:assets": "cp -f src/content-engine/jeroen-kennisbank.txt dist/content-engine/jeroen-kennisbank.txt 2>/dev/null || true && cp -f src/content-engine/presets.json dist/content-engine/presets.json 2>/dev/null || true",
+    "build:kennisbank": "ts-node scripts/build-kennisbank.ts",
     "build": "npm run build:css && tsc && npm run build:assets",
     "start": "node dist/server.js",
     "dev": "npm run build:css && ts-node src/server.ts"
@@ -18,22 +19,20 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "archiver": "^7.0.1",
     "cors": "^2.8.5",
     "dotenv": "^17.3.1",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
     "pino": "^9.6.0",
-    "puppeteer": "^24.2.1",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.2",
-    "@types/archiver": "^7.0.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",
+    "mammoth": "^1.12.0",
     "tailwindcss": "^4.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"

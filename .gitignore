@@ -5,3 +5,4 @@ output/
 dist/
 aangeleverde-content/
 public/styles.css
+.claude/

@@ -113,6 +113,11 @@ async function restoreProject(saved) {
                     p.classList.toggle('active', p.dataset.value === val);
                 });
             });
+            // Update preset-select (na loadPresets vullen de opties dit alsnog)
+            const presetSelect = document.getElementById('presetSelect');
+            if (presetSelect && aiOptions.presetId) {
+                presetSelect.value = aiOptions.presetId;
+            }
             updateOptionsSummary();
         }
 
@@ -152,6 +157,127 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Cloud opslag (Supabase) ────────────────────────────────────
 let currentProjectId = null;
 let currentAccessToken = null;
+
+// ── Vorige ontwerpen (localStorage) ────────────────────────────
+const PROJECTS_HISTORY_KEY = 'bv_cloud_projects_list';
+const PROJECTS_HISTORY_MAX = 25;
+
+function loadProjectsHistory() {
+    try {
+        const raw = localStorage.getItem(PROJECTS_HISTORY_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function saveProjectsHistory(list) {
+    try {
+        localStorage.setItem(PROJECTS_HISTORY_KEY, JSON.stringify(list));
+    } catch (e) {
+        console.warn('Kon projectenlijst niet opslaan:', e);
+    }
+}
+
+function addProjectToHistory(entry) {
+    if (!entry || !entry.projectId || !entry.accessToken) return;
+    const list = loadProjectsHistory();
+    const existing = list.findIndex(p => p.projectId === entry.projectId);
+    const record = {
+        projectId: entry.projectId,
+        accessToken: entry.accessToken,
+        name: entry.name || entry.topic || 'Naamloos',
+        topic: entry.topic || '',
+        updatedAt: new Date().toISOString(),
+    };
+    if (existing >= 0) list.splice(existing, 1);
+    list.unshift(record);
+    while (list.length > PROJECTS_HISTORY_MAX) list.pop();
+    saveProjectsHistory(list);
+    renderRecentProjects();
+}
+
+function removeProjectFromHistory(projectId) {
+    const list = loadProjectsHistory().filter(p => p.projectId !== projectId);
+    saveProjectsHistory(list);
+    renderRecentProjects();
+}
+
+function clearProjectsHistory() {
+    if (!confirm('Alle vorige ontwerpen uit deze browser verwijderen?\n(Je cloud-opslag blijft bestaan — je kunt ze later via de deelbare link terughalen.)')) return;
+    localStorage.removeItem(PROJECTS_HISTORY_KEY);
+    renderRecentProjects();
+    showToast('Lijst gewist');
+}
+
+function formatRelativeTime(iso) {
+    if (!iso) return '';
+    const then = new Date(iso);
+    const mins = Math.round((Date.now() - then.getTime()) / 60000);
+    if (mins < 1) return 'zojuist';
+    if (mins < 60) return `${mins} min geleden`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return `${hours} uur geleden`;
+    const days = Math.round(hours / 24);
+    if (days < 30) return `${days} dag${days === 1 ? '' : 'en'} geleden`;
+    return then.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function escapeHtml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function renderRecentProjects() {
+    const wrapper = document.getElementById('recentProjects');
+    const list = document.getElementById('recentProjectsList');
+    if (!wrapper || !list) return;
+
+    const history = loadProjectsHistory();
+    if (history.length === 0) {
+        wrapper.classList.add('hidden');
+        list.innerHTML = '';
+        return;
+    }
+
+    wrapper.classList.remove('hidden');
+    list.innerHTML = history.map(p => `
+        <button type="button" class="recent-item" data-project-id="${escapeHtml(p.projectId)}" data-access-token="${escapeHtml(p.accessToken)}">
+            <div class="recent-item-main">
+                <div class="recent-item-name">${escapeHtml(p.name)}</div>
+                <div class="recent-item-meta"><span>${escapeHtml(formatRelativeTime(p.updatedAt))}</span></div>
+            </div>
+            <span class="recent-item-remove" data-remove="${escapeHtml(p.projectId)}" title="Verwijder uit lijst">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </span>
+        </button>
+    `).join('');
+
+    // Wire handlers (event delegation)
+    list.querySelectorAll('.recent-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('[data-remove]');
+            if (removeBtn) {
+                e.stopPropagation();
+                removeProjectFromHistory(removeBtn.dataset.remove);
+                return;
+            }
+            const id = btn.dataset.projectId;
+            const tok = btn.dataset.accessToken;
+            if (id && tok) loadFromCloud(id, tok);
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderRecentProjects();
+});
 
 async function saveToCloud() {
     if (!currentCarouselData) {
@@ -205,6 +331,12 @@ async function saveToCloud() {
         }
 
         if (result.success) {
+            addProjectToHistory({
+                projectId: currentProjectId,
+                accessToken: currentAccessToken,
+                name: payload.name,
+                topic: payload.topic,
+            });
             showToast('Project opgeslagen in de cloud');
         } else {
             throw new Error(result.error || 'Opslaan mislukt');
@@ -264,6 +396,14 @@ async function loadFromCloud(projectId, token) {
         startAutoSave();
 
         window.history.replaceState(null, '', `?project=${projectId}&token=${token}`);
+
+        addProjectToHistory({
+            projectId,
+            accessToken: token,
+            name: project.name,
+            topic: project.topic,
+        });
+
         showToast('Project geladen uit de cloud');
     } catch (e) {
         console.error('Cloud load error:', e);
@@ -285,6 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── AI Generation Options ───────────────────────────────────────
 const aiOptions = {
     postLength: 'medium',  // kort | medium | lang
+    presetId: '',          // '' = automatisch (AI kiest)
 };
 
 function toggleAiOptions() {
@@ -312,15 +453,58 @@ function setupAiOptions() {
             updateOptionsSummary();
         });
     });
+
+    const presetSelect = document.getElementById('presetSelect');
+    if (presetSelect) {
+        presetSelect.addEventListener('change', () => {
+            aiOptions.presetId = presetSelect.value || '';
+            updateOptionsSummary();
+        });
+        loadPresets();
+    }
+
     updateOptionsSummary();
 }
 
-function updateOptionsSummary() {
-    const labels = { kort: 'Kort', medium: 'Medium', lang: 'Lang' };
-    const summaryEl = document.getElementById('aiOptionsSummary');
-    if (summaryEl) {
-        summaryEl.textContent = labels[aiOptions.postLength] || 'Medium';
+async function loadPresets() {
+    const select = document.getElementById('presetSelect');
+    if (!select) return;
+    try {
+        const res = await fetch('/api/presets');
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.presets)) return;
+
+        const sorted = [...data.presets].sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id, 'nl'));
+        for (const preset of sorted) {
+            const opt = document.createElement('option');
+            opt.value = preset.id;
+            opt.textContent = preset.name || preset.id;
+            select.appendChild(opt);
+        }
+
+        // Restore eventuele eerdere keuze (via localStorage-autosave)
+        if (aiOptions.presetId) {
+            select.value = aiOptions.presetId;
+        }
+    } catch (e) {
+        console.warn('Kon presets niet laden:', e);
     }
+}
+
+function updateOptionsSummary() {
+    const lengthLabels = { kort: 'Kort', medium: 'Medium', lang: 'Lang' };
+    const summaryEl = document.getElementById('aiOptionsSummary');
+    if (!summaryEl) return;
+
+    const parts = [lengthLabels[aiOptions.postLength] || 'Medium'];
+    if (aiOptions.presetId) {
+        const select = document.getElementById('presetSelect');
+        const chosen = select ? select.options[select.selectedIndex]?.textContent : null;
+        if (chosen) parts.push(chosen);
+    } else {
+        parts.push('Auto-formaat');
+    }
+    summaryEl.textContent = parts.join(' · ');
 }
 
 document.addEventListener('DOMContentLoaded', setupAiOptions);
@@ -350,6 +534,13 @@ async function generateCarousel() {
         showToast('Voer eerst een onderwerp in!', 'error');
         return;
     }
+
+    // Nieuw ontwerp → reset cloud-project-ref zodat Opslaan een nieuw project maakt
+    currentProjectId = null;
+    currentAccessToken = null;
+    localStorage.removeItem('bv_cloud_project_id');
+    localStorage.removeItem('bv_cloud_access_token');
+    window.history.replaceState(null, '', window.location.pathname);
 
     const btn = document.getElementById('generateBtn');
     const loading = document.getElementById('loading');
@@ -740,14 +931,29 @@ async function applyTextEdits() {
 async function exportPDF() {
     if (!editor) return;
 
+    const topic = (document.getElementById('topicInput')?.value || '').trim();
+    const title = currentCarouselData?.title
+        || topic
+        || 'LinkedIn Carousel';
+
     showToast('PDF wordt gegenereerd...');
     try {
-        await editor.exportPDF();
+        await editor.exportPDF({ title, subject: topic, filename: makePdfFilename(title) });
         showToast('PDF gedownload!');
     } catch (e) {
         console.error(e);
         showToast('Fout bij PDF export', 'error');
     }
+}
+
+function makePdfFilename(title) {
+    const clean = (title || 'carousel')
+        .replace(/[\\/:*?"<>|]+/g, '')     // verboden filename-tekens weghalen
+        .replace(/\s+/g, ' ')              // meerdere spaties → één
+        .trim()
+        .replace(/\.+$/, '')               // geen trailing dots
+        .slice(0, 80);
+    return (clean || 'carousel') + '.pdf';
 }
 
 // --- Copy Post Text ---
@@ -977,6 +1183,46 @@ async function addArrowToCanvas(name) {
     } catch (e) {
         showToast('Kon pijl niet laden', 'error');
     }
+}
+
+async function addAssetToCanvas(url, layerName, targetWidth = 260) {
+    if (!editor) return;
+    try {
+        const img = await new Promise((resolve, reject) => {
+            fabric.Image.fromURL(url, (img) => {
+                if (img && img.width > 0) resolve(img);
+                else reject(new Error('Failed'));
+            }, { crossOrigin: 'anonymous' });
+        });
+
+        const scale = targetWidth / img.width;
+        img.set({
+            left: (1080 - targetWidth) / 2,
+            top: (1080 - img.height * scale) / 2,
+            scaleX: scale,
+            scaleY: scale,
+            selectable: true,
+            evented: true,
+            layerName,
+        });
+
+        editor.fabricCanvas.add(img);
+        editor.fabricCanvas.setActiveObject(img);
+        editor.fabricCanvas.renderAll();
+        editor._pushHistory();
+        showToast(`${layerName} toegevoegd`);
+    } catch (e) {
+        console.error(e);
+        showToast(`Kon ${layerName.toLowerCase()} niet laden`, 'error');
+    }
+}
+
+function addBusinessSvg(filename, label) {
+    return addAssetToCanvas(`/assets/business/${filename}`, label, 260);
+}
+
+function addFrameToCanvas(filename, label) {
+    return addAssetToCanvas(`/assets/lijnen/${filename}`, label, 600);
 }
 
 function deleteSelected() {

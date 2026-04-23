@@ -15,14 +15,3 @@ export function validateGenerate(req: Request, res: Response, next: NextFunction
 
     next();
 }
-
-export function validateRender(req: Request, res: Response, next: NextFunction): void {
-    const { slides } = req.body;
-
-    if (!slides || !Array.isArray(slides) || slides.length === 0) {
-        res.status(400).json({ success: false, error: 'Veld "slides" moet een niet-lege array zijn.' });
-        return;
-    }
-
-    next();
-}

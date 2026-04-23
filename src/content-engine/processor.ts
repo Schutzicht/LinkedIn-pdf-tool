@@ -10,6 +10,7 @@ import { z } from 'zod';
 
 export interface GenerateOptions {
     postLength?: 'kort' | 'medium' | 'lang';
+    presetId?: string;
 }
 
 // --- Zod schema voor AI response validatie ---
@@ -212,23 +213,34 @@ export class ContentProcessor {
             examples: p.examples || [],
         }));
 
-        const selectionPrompt = buildPresetSelectionPrompt(topic, presetSummaries);
         let selectedPresetId = 'reflectie-kort'; // safe default
         let lampIcoon = false;
 
-        try {
-            const selectionRaw = await this.callAI(selectionPrompt);
-            const selMatch = selectionRaw.match(/\{[\s\S]*\}/);
-            if (selMatch) {
-                const sel = JSON.parse(selMatch[0]);
-                if (sel.presetId && presetSummaries.find(p => p.id === sel.presetId)) {
-                    selectedPresetId = sel.presetId;
-                }
-                lampIcoon = !!sel.lampIcoon;
-                logger.info({ selectedPresetId, lampIcoon, reden: sel.reden }, 'Preset gekozen');
+        // Als user een preset heeft gekozen in de UI: sla AI-selectie over
+        const userPresetId = options?.presetId?.trim();
+        if (userPresetId && presetSummaries.find(p => p.id === userPresetId)) {
+            selectedPresetId = userPresetId;
+            logger.info({ selectedPresetId }, 'Preset door gebruiker gekozen');
+        } else {
+            if (userPresetId) {
+                logger.warn({ userPresetId }, 'Onbekend preset-id door gebruiker — AI kiest zelf');
             }
-        } catch (e) {
-            logger.warn({ err: e }, 'Preset selectie mislukt, fallback naar default');
+
+            const selectionPrompt = buildPresetSelectionPrompt(topic, presetSummaries);
+            try {
+                const selectionRaw = await this.callAI(selectionPrompt);
+                const selMatch = selectionRaw.match(/\{[\s\S]*\}/);
+                if (selMatch) {
+                    const sel = JSON.parse(selMatch[0]);
+                    if (sel.presetId && presetSummaries.find(p => p.id === sel.presetId)) {
+                        selectedPresetId = sel.presetId;
+                    }
+                    lampIcoon = !!sel.lampIcoon;
+                    logger.info({ selectedPresetId, lampIcoon, reden: sel.reden }, 'Preset door AI gekozen');
+                }
+            } catch (e) {
+                logger.warn({ err: e }, 'Preset selectie mislukt, fallback naar default');
+            }
         }
 
         const preset = (presetsData.presets as any[]).find(p => p.id === selectedPresetId);

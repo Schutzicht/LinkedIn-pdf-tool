@@ -3,12 +3,9 @@ import * as path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { initServices, renderer } from './services';
-import { CONFIG } from './config';
-import { cleanOldOutputFolders } from './utils/cleanup';
+import { initServices } from './services';
 import { logger } from './utils/logger';
 import generateRoute from './routes/generate.route';
-import renderRoute from './routes/render.route';
 import debugRoute from './routes/debug.route';
 import projectsRoute from './routes/projects.route';
 
@@ -20,7 +17,7 @@ app.set('trust proxy', 1);
 
 // --- Security Middleware ---
 app.use(helmet({
-    contentSecurityPolicy: false, // Puppeteer-generated content needs inline styles
+    contentSecurityPolicy: false, // canvas editor gebruikt inline styles
 }));
 const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
@@ -39,40 +36,39 @@ const generateLimiter = rateLimit({
     message: { success: false, error: 'Te veel verzoeken. Probeer het over een minuut opnieuw.' },
 });
 
+const projectsLimiter = rateLimit({
+    windowMs: 60_000,
+    max: 60,            // 60 project-calls per minuut (ruim voor edit-flow met autosave)
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false },
+    message: { success: false, error: 'Te veel verzoeken op projecten.' },
+});
+
 // --- Body Parsing ---
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // --- Static Files ---
 app.use(express.static(path.join(__dirname, '../public')));
-app.use('/output', express.static(CONFIG.paths.output));
 
 // --- Routes ---
 app.use('/api/generate', generateLimiter, generateRoute);
-app.use('/api/render', renderRoute);
-app.use('/api/projects', projectsRoute);
+app.use('/api/projects', projectsLimiter, projectsRoute);
 app.use('/api', debugRoute);
 
 // --- Health check (toont of env vars goed staan) ---
 app.get('/api/health', (_req, res) => {
-    const key = CONFIG.ai.apiKey;
     const isDev = process.env.NODE_ENV !== 'production';
     res.json({
         status: 'ok',
         nodeEnv: process.env.NODE_ENV || 'development',
-        // API key details alleen zichtbaar in development
         ...(isDev && {
-            apiKeyPresent: !!key,
-            apiKeyLength: key ? key.length : 0,
-            apiKeyPrefix: key ? key.substring(0, 8) + '...' : 'MISSING',
+            geminiKeyPresent: !!process.env.GEMINI_API_KEY,
+            groqKeyPresent: !!process.env.GROQ_API_KEY,
+            supabaseKeyPresent: !!process.env.SUPABASE_ANON_KEY,
         }),
     });
 });
-
-// --- Cleanup interval (elke 10 min i.p.v. per-request) ---
-const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
-const cleanupTimer = setInterval(() => {
-    cleanOldOutputFolders(CONFIG.paths.output);
-}, CLEANUP_INTERVAL_MS);
 
 // --- Start ---
 initServices().then(() => {
@@ -83,10 +79,8 @@ initServices().then(() => {
     // --- Graceful Shutdown ---
     const shutdown = async (signal: string) => {
         logger.info({ signal }, 'Shutdown signaal ontvangen');
-        clearInterval(cleanupTimer);
 
-        server.close(async () => {
-            await renderer.close();
+        server.close(() => {
             logger.info('Server afgesloten');
             process.exit(0);
         });

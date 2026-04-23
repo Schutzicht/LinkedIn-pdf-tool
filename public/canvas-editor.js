@@ -440,6 +440,11 @@ class SlideCanvasEditor {
     switchToSlide(index) {
         if (index === this.activeSlideIndex) return;
         this.suppressHistory = true;
+
+        // Haal overlay tijdelijk weg zodat hij niet in _saveCurrentSlide of remove-loop komt
+        const overlayWasVisible = this._safeAreaOverlayVisible === true;
+        if (overlayWasVisible) this._setSafeAreaOverlay(false);
+
         this._saveCurrentSlide();
 
         const current = this.fabricCanvas.getObjects().slice();
@@ -459,6 +464,10 @@ class SlideCanvasEditor {
 
         this.activeSlideIndex = index;
         this.fabricCanvas.discardActiveObject();
+
+        // Overlay weer terugzetten na slide-swap
+        if (overlayWasVisible) this._setSafeAreaOverlay(true);
+
         this.fabricCanvas.renderAll();
         this._renderLayerPanel();
         this._renderSlideTabs();
@@ -470,15 +479,35 @@ class SlideCanvasEditor {
         setTimeout(() => this._pushHistory(), 50);
     }
 
-    async exportPDF() {
+    async exportPDF(opts = {}) {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
             unit: 'px',
             format: [SLIDE_SIZE, SLIDE_SIZE],
             hotfixes: ['px_scaling'],
+            compress: true,
         });
 
+        // Metadata voor LinkedIn / downloadmanager
+        try {
+            pdf.setProperties({
+                title: opts.title || 'LinkedIn Carousel',
+                author: opts.author || 'Business Verbeteraars',
+                creator: 'Business Verbeteraars Content Engine',
+                subject: opts.subject || '',
+            });
+        } catch (_) {}
+
+        // Safe-area overlay mag niet in de PDF verschijnen
+        const overlayWasVisible = this._safeAreaOverlayVisible === true;
+        if (overlayWasVisible) this._setSafeAreaOverlay(false);
+
         const startSlide = this.activeSlideIndex;
+
+        // multiplier=2 → render canvas op 2160×2160 → scherpe PNG in PDF,
+        // PDF schaalt terug naar 1080 pagina-formaat. Bestand wordt wat groter
+        // (~3-4×) maar blijft ruim binnen LinkedIn's 100MB limiet.
+        const exportMultiplier = opts.multiplier ?? 2;
 
         for (let i = 0; i < this.slideObjects.length; i++) {
             if (i > 0) pdf.addPage([SLIDE_SIZE, SLIDE_SIZE]);
@@ -486,12 +515,56 @@ class SlideCanvasEditor {
             this.fabricCanvas.discardActiveObject();
             this.fabricCanvas.renderAll();
 
-            const dataUrl = this.fabricCanvas.toDataURL({ format: 'png', multiplier: 1, quality: 1 });
+            const dataUrl = this.fabricCanvas.toDataURL({ format: 'png', multiplier: exportMultiplier, quality: 1 });
             pdf.addImage(dataUrl, 'PNG', 0, 0, SLIDE_SIZE, SLIDE_SIZE);
         }
 
         this.switchToSlide(startSlide);
-        pdf.save('carousel.pdf');
+        if (overlayWasVisible) this._setSafeAreaOverlay(true);
+
+        pdf.save(opts.filename || 'carousel.pdf');
+    }
+
+    // ── Safe-area overlay (visuele hint, niet in de export) ─────
+    toggleSafeAreaOverlay() {
+        this._setSafeAreaOverlay(!this._safeAreaOverlayVisible);
+        return this._safeAreaOverlayVisible === true;
+    }
+
+    _setSafeAreaOverlay(visible) {
+        if (visible) {
+            if (this._safeAreaOverlayRect) return;
+            const rect = new fabric.Rect({
+                left: SAFE_AREA.left,
+                top: SAFE_AREA.top,
+                width: SAFE_AREA.right - SAFE_AREA.left,
+                height: SAFE_AREA.bottom - SAFE_AREA.top,
+                fill: 'transparent',
+                stroke: '#BF6A01',
+                strokeWidth: 2,
+                strokeDashArray: [8, 6],
+                selectable: false,
+                evented: false,
+                hoverCursor: 'default',
+                excludeFromExport: true,
+                layerName: '__safe_area_overlay__',
+                layerLocked: true,
+                layerVisible: true,
+            });
+            rect.__safeAreaOverlay = true;
+            this.fabricCanvas.add(rect);
+            rect.moveTo(this.fabricCanvas.getObjects().length - 1); // bovenop
+            this.fabricCanvas.renderAll();
+            this._safeAreaOverlayRect = rect;
+            this._safeAreaOverlayVisible = true;
+        } else {
+            if (this._safeAreaOverlayRect) {
+                this.fabricCanvas.remove(this._safeAreaOverlayRect);
+                this._safeAreaOverlayRect = null;
+            }
+            this._safeAreaOverlayVisible = false;
+            this.fabricCanvas.renderAll();
+        }
     }
 
     exportSlidePNG(index) {
@@ -2161,7 +2234,9 @@ class SlideCanvasEditor {
 
     _saveCurrentSlide() {
         if (this.activeSlideIndex >= 0 && this.activeSlideIndex < this.slideObjects.length) {
-            this.slideObjects[this.activeSlideIndex] = this.fabricCanvas.getObjects().slice();
+            this.slideObjects[this.activeSlideIndex] = this.fabricCanvas.getObjects()
+                .filter(obj => !obj.__safeAreaOverlay)
+                .slice();
         }
     }
 
@@ -2220,7 +2295,10 @@ class SlideCanvasEditor {
     _renderLayerPanel() {
         if (!this.layerPanelEl) return;
 
-        const objects = this.fabricCanvas.getObjects().slice().reverse();
+        const objects = this.fabricCanvas.getObjects()
+            .filter(o => !o.__safeAreaOverlay)
+            .slice()
+            .reverse();
         const activeObj = this.fabricCanvas.getActiveObject();
 
         let html = '';
@@ -2393,4 +2471,11 @@ function initCanvasEditor() {
 function exportPositions() {
     if (editor) return editor.exportPositions();
     console.warn('Editor not initialized');
+}
+
+function toggleSafeArea() {
+    if (!editor) return;
+    const visible = editor.toggleSafeAreaOverlay();
+    const btn = document.getElementById('btnSafeArea');
+    if (btn) btn.classList.toggle('active', visible);
 }

@@ -56,6 +56,14 @@
                         </button>
                         <div class="ai-options-body" id="aiOptionsBody" style="display:none;">
 
+                            <!-- Formaat / preset -->
+                            <div class="opt-row">
+                                <label class="opt-label" for="presetSelect">Formaat</label>
+                                <select id="presetSelect" class="opt-select">
+                                    <option value="">Automatisch (AI kiest)</option>
+                                </select>
+                            </div>
+
                             <!-- Post lengte -->
                             <div class="opt-row">
                                 <label class="opt-label">Post lengte</label>
@@ -140,6 +148,10 @@
                         <button onclick="exportPDF()" class="btn-tool btn-tool-orange" title="Download PDF">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <span class="btn-tool-label">PDF</span>
+                        </button>
+                        <button id="btnSafeArea" onclick="toggleSafeArea()" class="btn-tool btn-tool-grey" title="Safe-area tonen">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="3 3" d="M4 4h16v16H4z"/></svg>
+                            <span class="btn-tool-label">Safe-area</span>
                         </button>
                         <button onclick="exportPositions()" class="btn-tool btn-tool-grey" title="Export posities">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
@@ -239,6 +251,29 @@
                                         <button onclick="addShapeToCanvas('line-v')" class="lib-shape" title="Lijn V"><div class="shape-line-v"></div></button>
                                     </div>
                                 </div>
+
+                                <!-- Widea illustraties -->
+                                <div class="lib-group">
+                                    <div class="lib-group-title">Widea Illustraties</div>
+                                    <div class="lib-grid lib-grid-3">
+                                        <button onclick="addBusinessSvg('widea-raketlamp-blauw.svg', 'Raket-lamp')" class="lib-item" title="Raket-lamp"><img src="/assets/business/widea-raketlamp-blauw.svg"></button>
+                                        <button onclick="addBusinessSvg('widea-raket-rood.svg', 'Raket rood')" class="lib-item" title="Raket rood"><img src="/assets/business/widea-raket-rood.svg"></button>
+                                        <button onclick="addBusinessSvg('widea-gouden-driehoek.svg', 'Gouden driehoek')" class="lib-item" title="Gouden driehoek"><img src="/assets/business/widea-gouden-driehoek.svg"></button>
+                                        <button onclick="addBusinessSvg('widea swot plus.svg', 'SWOT plus')" class="lib-item" title="SWOT+"><img src="/assets/business/widea swot plus.svg"></button>
+                                        <button onclick="addBusinessSvg('widea why statement.svg', 'Why statement')" class="lib-item" title="Why statement"><img src="/assets/business/widea why statement.svg"></button>
+                                        <button onclick="addBusinessSvg('widea-business-markt-plus-bedrijf v2.svg', 'Markt + Bedrijf')" class="lib-item" title="Markt + Bedrijf"><img src="/assets/business/widea-business-markt-plus-bedrijf v2.svg"></button>
+                                    </div>
+                                </div>
+
+                                <!-- Frames & lijnen -->
+                                <div class="lib-group">
+                                    <div class="lib-group-title">Frames</div>
+                                    <div class="lib-grid lib-grid-3">
+                                        <button onclick="addFrameToCanvas('frame van lijnen vierkant.png', 'Frame Vierkant')" class="lib-item" title="Vierkant frame"><img src="/assets/lijnen/frame van lijnen vierkant.png"></button>
+                                        <button onclick="addFrameToCanvas('frame van lijnen rechthoekig staand.png', 'Frame Staand')" class="lib-item" title="Staand frame"><img src="/assets/lijnen/frame van lijnen rechthoekig staand.png"></button>
+                                        <button onclick="addFrameToCanvas('frame van lijnen rechthoekig liggend.png', 'Frame Liggend')" class="lib-item" title="Liggend frame"><img src="/assets/lijnen/frame van lijnen rechthoekig liggend.png"></button>
+                                    </div>
+                                </div>
                                 <!-- Delete -->
                                 <button onclick="deleteSelected()" class="btn-delete">Verwijder geselecteerd</button>
                             </div>
@@ -252,6 +287,17 @@
                 <img src="/favicon-v2.svg" alt="" class="empty-icon">
                 <h3 class="empty-title">Klaar om te starten</h3>
                 <p class="empty-text">Voer een onderwerp in en klik op <strong>Genereren</strong> om je eerste carousel te maken.</p>
+
+                <!-- Vorige ontwerpen -->
+                <div id="recentProjects" class="recent-projects hidden">
+                    <div class="recent-header">
+                        <h4 class="recent-title">Vorige ontwerpen</h4>
+                        <button class="recent-clear" onclick="clearProjectsHistory()" title="Lijst wissen">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22"/></svg>
+                        </button>
+                    </div>
+                    <div id="recentProjectsList" class="recent-list"></div>
+                </div>
             </div>
         </section>
 

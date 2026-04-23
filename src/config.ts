@@ -1,8 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import * as path from 'path';
-
 // ============================================================
 // WIDEA BRAND CONFIGURATIE — Gebaseerd op stijlboek 2025
 // ============================================================
@@ -33,7 +31,7 @@ export const BRAND = {
         brand: 'Business Verbeteraars',
     },
     images: {
-        logo: 'https://widea.nl/wp-content/themes/widea-theme/assets/img/new-logo.svg',
+        logo: '/assets/logo.svg',
     },
 } as const;
 
@@ -49,8 +47,5 @@ export const CONFIG = {
         // Max chars voor input — moet ruim onder TPM limiet blijven
         // 12k TPM ≈ 36k chars, we houden 18k aan om buffer te hebben voor output
         maxInputChars: 18000,
-    },
-    paths: {
-        output: path.resolve(__dirname, '..', 'output'),
     },
 } as const;

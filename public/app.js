@@ -70,33 +70,10 @@ window.addEventListener('beforeunload', () => {
     if (currentCarouselData) saveProject();
 });
 
-// Bij page load: check of er een opgeslagen project is en vraag of restoren
-async function checkRestoreOnLoad() {
-    const saved = getSavedProject();
-    if (!saved || !saved.carouselData) return;
-
-    const savedDate = new Date(saved.savedAt);
-    const minutesAgo = Math.round((Date.now() - savedDate.getTime()) / 60000);
-    let timeText;
-    if (minutesAgo < 1) timeText = 'zojuist';
-    else if (minutesAgo < 60) timeText = `${minutesAgo} minuten geleden`;
-    else if (minutesAgo < 1440) timeText = `${Math.round(minutesAgo / 60)} uur geleden`;
-    else timeText = `${Math.round(minutesAgo / 1440)} dagen geleden`;
-
-    const topicPreview = (saved.topic || '').slice(0, 60) || 'Eerder werk';
-    const ok = confirm(
-        `📂 Eerder werk gevonden\n\n` +
-        `"${topicPreview}"\n` +
-        `Opgeslagen ${timeText}.\n\n` +
-        `Wil je dit project terug laden?`
-    );
-
-    if (ok) {
-        await restoreProject(saved);
-    } else {
-        clearSavedProject();
-    }
-}
+// localStorage blijft als crash-recovery vangnet, maar de gebruiker krijgt geen
+// popup meer bij elke page load — projecten openen gaat via de projectenoverzicht.
+// (De oude `checkRestoreOnLoad` met confirm() is verwijderd; cloud-save direct
+// na generate maakt de localStorage-prompt overbodig.)
 
 async function restoreProject(saved) {
     try {
@@ -151,10 +128,7 @@ async function restoreProject(saved) {
     }
 }
 
-// Run restore check after DOM ready (localStorage + URL project)
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(checkRestoreOnLoad, 500);
-});
+// (Vroeger startten we hier checkRestoreOnLoad — die popup is nu weg.)
 
 // ── Cloud opslag (Supabase) ────────────────────────────────────
 let currentProjectId = null;
@@ -330,15 +304,19 @@ function escapeHtml(str) {
 function renderRecentProjects() {
     const wrapper = document.getElementById('recentProjects');
     const list = document.getElementById('recentProjectsList');
+    const emptyMsg = document.getElementById('recentProjectsEmpty');
     if (!wrapper || !list) return;
 
+    // Wrapper altijd zichtbaar — bij lege lijst tonen we de placeholder
+    wrapper.classList.remove('hidden');
+
     if (!recentProjectsCache || recentProjectsCache.length === 0) {
-        wrapper.classList.add('hidden');
         list.innerHTML = '';
+        if (emptyMsg) emptyMsg.classList.remove('hidden');
         return;
     }
 
-    wrapper.classList.remove('hidden');
+    if (emptyMsg) emptyMsg.classList.add('hidden');
     list.innerHTML = recentProjectsCache.map(p => `
         <button type="button" class="recent-item" data-project-id="${escapeHtml(p.projectId)}" data-access-token="${escapeHtml(p.accessToken)}">
             <div class="recent-item-main">
@@ -369,6 +347,41 @@ function renderRecentProjects() {
 // Legacy: behoudt oude onclick handler in HTML header, verwijst naar de nieuwe flow
 function clearProjectsHistory() {
     logoutOwner();
+}
+
+// Sluit het huidige project en ga terug naar de projectenoverzicht-startpagina.
+// Aangeroepen door klik op het logo (nav-brand).
+function goToProjectsOverview() {
+    // Stop autosave-timers
+    stopAutoSave();
+
+    // Reset in-memory state
+    currentCarouselData = null;
+    currentProjectId = null;
+    currentAccessToken = null;
+    lastCloudSync = 0;
+
+    // Vergeet welk cloud-project actief was (project blijft staan in Supabase)
+    localStorage.removeItem('bv_cloud_project_id');
+    localStorage.removeItem('bv_cloud_access_token');
+
+    // URL clean maken (geen ?project=...&token=... meer)
+    window.history.replaceState(null, '', window.location.pathname);
+
+    // UI: editor weg, overzicht zichtbaar
+    document.getElementById('canvasEditorSection')?.classList.add('hidden');
+    document.getElementById('editorSection')?.classList.add('hidden');
+    document.getElementById('postSection')?.classList.add('hidden');
+    document.getElementById('loading')?.classList.add('hidden');
+    document.getElementById('emptyState')?.classList.remove('hidden');
+
+    // Input leeg, mobile naar input-tab
+    const topicInput = document.getElementById('topicInput');
+    if (topicInput) topicInput.value = '';
+    if (window.innerWidth <= 1024) toggleMobilePanel('input');
+
+    // Verse lijst ophalen
+    fetchRecentProjects();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

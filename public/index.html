@@ -17,11 +17,11 @@
     <!-- ═══ Top Navigation Bar ═══ -->
     <nav class="nav-bar">
         <div class="nav-inner">
-            <div class="nav-brand">
+            <button type="button" class="nav-brand" onclick="goToProjectsOverview()" title="Naar projectenoverzicht">
                 <img src="/assets/logo.svg" alt="Business Verbeteraars" class="nav-logo">
                 <div class="nav-divider"></div>
                 <span class="nav-label">Content Engine</span>
-            </div>
+            </button>
             <a href="https://www.businessverbeteraars.nl" target="_blank" class="nav-link">
                 businessverbeteraars.nl
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -282,21 +282,24 @@
                 </div>
             </div>
 
-            <!-- Empty State -->
+            <!-- Projectenoverzicht (startpagina) -->
             <div id="emptyState" class="empty-state">
-                <img src="/favicon-v2.svg" alt="" class="empty-icon">
-                <h3 class="empty-title">Klaar om te starten</h3>
-                <p class="empty-text">Voer een onderwerp in en klik op <strong>Genereren</strong> om je eerste carousel te maken.</p>
-
-                <!-- Vorige ontwerpen -->
-                <div id="recentProjects" class="recent-projects hidden">
-                    <div class="recent-header">
-                        <h4 class="recent-title">Vorige ontwerpen</h4>
-                        <button class="recent-clear" onclick="logoutOwner()" title="Uitloggen">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        </button>
+                <div class="overview-header">
+                    <div>
+                        <h3 class="overview-title">Mijn projecten</h3>
+                        <p class="overview-subtitle">Open een bestaand ontwerp of begin links een nieuw onderwerp.</p>
                     </div>
+                    <button class="overview-logout" onclick="logoutOwner()" title="Uitloggen">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        Uitloggen
+                    </button>
+                </div>
+                <div id="recentProjects" class="recent-projects">
                     <div id="recentProjectsList" class="recent-list"></div>
+                    <div id="recentProjectsEmpty" class="recent-empty hidden">
+                        <img src="/favicon-v2.svg" alt="" class="recent-empty-icon">
+                        <p class="recent-empty-text">Nog geen projecten. Vul links een onderwerp in en klik op <strong>AI Genereren</strong>.</p>
+                    </div>
                 </div>
             </div>
         </section>

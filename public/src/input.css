@@ -163,6 +163,8 @@ body {
     background: #fff;
     border-radius: 16px;
     border: 1px solid #e8ecf0;
+    /* Mag niet krimpen wanneer post+editor secties verschijnen — anders vallen de Genereer/Zelf maken buttons uit beeld */
+    flex-shrink: 0;
     overflow: hidden;
 }
 .input-card-header {

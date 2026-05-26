@@ -36,11 +36,21 @@ export const BRAND = {
 } as const;
 
 export const CONFIG = {
+    // Primary: Claude (Anthropic) — sterkste in schrijfstijl-overname uit kennisbank
+    anthropic: {
+        apiKey: process.env.ANTHROPIC_API_KEY || '',
+        // Default Opus 4.7. Voor kosten-optimalisatie kan dit naar
+        // 'claude-sonnet-4-6' (5x goedkoper) of 'claude-haiku-4-5' (15x goedkoper).
+        model: process.env.ANTHROPIC_MODEL || 'claude-opus-4-7',
+        maxTokens: 4096,
+    },
+    // Fallback 1: Gemini
     ai: {
         apiKey: process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || '',
         model: process.env.AI_MODEL || 'gemini-2.0-flash-lite',
         temperature: 0.7,
     },
+    // Fallback 2: Groq (laatste redmiddel)
     groq: {
         apiKey: process.env.GROQ_API_KEY || '',
         model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',

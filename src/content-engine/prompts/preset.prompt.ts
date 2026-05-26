@@ -59,13 +59,59 @@ interface PresetFillOptions {
 }
 
 /**
- * STAP 2: Vul de tekst-velden in voor het gekozen preset.
- * Kennisbank wordt meegegeven voor stijl-referentie.
+ * Voor Claude: stabiel system-deel met kennisbank + stijlregels.
+ * Dit deel verandert nooit tussen generaties en is daarom kandidaat voor
+ * prompt caching (~10x goedkoper bij hergebruik).
+ */
+export function buildPresetFillSystemPrompt(kennisbank: string): string {
+    return `
+Je bent Jeroen van Business Verbeteraars. Je schrijft LinkedIn carousels.
+
+**REFERENTIEMATERIAAL — KOPIEER DEZE STIJL EXACT:**
+${kennisbank}
+
+**SCHRIJFSTIJL (STRIKT):**
+- Wie: Ervaren business coach. Geen guru. Nuchter, direct, reflectief.
+- Toon: Confronterend maar respectvol. Legt problemen bloot vanuit ervaring.
+- Taalgebruik: Professioneel, toegankelijk Nederlands. NOOIT grof, plat of informeel.
+- Retorische middelen: Gebruik "Nee: ..." om aannames te corrigeren. Stel retorische vragen.
+- Zinslengte: Mix van kort en lang. Korte zinnen voor impact.
+- VERMIJD: Clickbait, superlatieven, generieke business jargon, grof taalgebruik.
+`.trim();
+}
+
+/**
+ * Voor Claude: variabel user-deel met topic, preset en JSON-schema.
+ * Dit verandert per generatie en wordt niet gecached.
+ */
+export function buildPresetFillUserPrompt(
+    topic: string,
+    preset: any,
+    options?: PresetFillOptions
+): string {
+    return buildFillContent(topic, preset, options);
+}
+
+/**
+ * STAP 2 (legacy combined): Vul de tekst-velden in voor het gekozen preset.
+ * Wordt gebruikt door Gemini/Groq fallback die geen system/user split kennen.
  */
 export function buildPresetFillPrompt(
     topic: string,
     preset: any,
     kennisbank: string,
+    options?: PresetFillOptions
+): string {
+    return `${buildPresetFillSystemPrompt(kennisbank)}\n\n${buildFillContent(topic, preset, options)}`;
+}
+
+/**
+ * Interne helper: het variabele deel van de fill-prompt (topic + preset + JSON).
+ * Gedeeld tussen Claude (user message) en Gemini/Groq (combined prompt).
+ */
+function buildFillContent(
+    topic: string,
+    preset: any,
     options?: PresetFillOptions
 ): string {
     // Resolve options met defaults
@@ -122,19 +168,6 @@ export function buildPresetFillPrompt(
     });
 
     return `
-Je bent Jeroen van Business Verbeteraars. Je schrijft LinkedIn carousels.
-
-**REFERENTIEMATERIAAL — KOPIEER DEZE STIJL EXACT:**
-${kennisbank}
-
-**SCHRIJFSTIJL (STRIKT):**
-- Wie: Ervaren business coach. Geen guru. Nuchter, direct, reflectief.
-- Toon: Confronterend maar respectvol. Legt problemen bloot vanuit ervaring.
-- Taalgebruik: Professioneel, toegankelijk Nederlands. NOOIT grof, plat of informeel.
-- Retorische middelen: Gebruik "Nee: ..." om aannames te corrigeren. Stel retorische vragen.
-- Zinslengte: Mix van kort en lang. Korte zinnen voor impact.
-- VERMIJD: Clickbait, superlatieven, generieke business jargon, grof taalgebruik.
-
 **ONDERWERP:** "${topic}"
 
 **LENGTE INSTELLING:** ${lengthLabel}

@@ -1,9 +1,14 @@
 import type { CarouselData } from '../types';
 import { CONFIG } from '../config';
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { buildPresetSelectionPrompt, buildPresetFillPrompt } from './prompts/preset.prompt';
+import {
+    buildPresetSelectionPrompt,
+    buildPresetFillSystemPrompt,
+    buildPresetFillUserPrompt,
+} from './prompts/preset.prompt';
 import presetsData from './presets.json';
 import { logger } from '../utils/logger';
 import { z } from 'zod';
@@ -85,22 +90,31 @@ async function sleep(ms: number): Promise<void> {
 }
 
 export class ContentProcessor {
-    private model: GenerativeModel;
+    private model: GenerativeModel | null = null;
+    private anthropic: Anthropic | null = null;
     private kennisbankPath: string;
     private kennisbankCache: string | null = null;
 
     constructor() {
-        if (!CONFIG.ai.apiKey) {
-            logger.warn('GEMINI_API_KEY ontbreekt in de omgevingsvariabelen. Stel deze in via .env');
+        if (!CONFIG.anthropic.apiKey && !CONFIG.ai.apiKey && !CONFIG.groq.apiKey) {
+            logger.warn('Geen AI-key gevonden. Stel ANTHROPIC_API_KEY (aanbevolen), GEMINI_API_KEY of GROQ_API_KEY in via .env');
         }
-        const genAI = new GoogleGenerativeAI(CONFIG.ai.apiKey);
-        this.model = genAI.getGenerativeModel({
-            model: CONFIG.ai.model,
-            generationConfig: {
-                temperature: CONFIG.ai.temperature,
-                responseMimeType: 'application/json',
-            },
-        });
+        // Primary: Claude
+        if (CONFIG.anthropic.apiKey) {
+            this.anthropic = new Anthropic({ apiKey: CONFIG.anthropic.apiKey });
+            logger.info({ model: CONFIG.anthropic.model }, 'Claude (Anthropic) geactiveerd als primaire AI');
+        }
+        // Fallback: Gemini
+        if (CONFIG.ai.apiKey) {
+            const genAI = new GoogleGenerativeAI(CONFIG.ai.apiKey);
+            this.model = genAI.getGenerativeModel({
+                model: CONFIG.ai.model,
+                generationConfig: {
+                    temperature: CONFIG.ai.temperature,
+                    responseMimeType: 'application/json',
+                },
+            });
+        }
         this.kennisbankPath = path.join(__dirname, 'jeroen-kennisbank.txt');
     }
 
@@ -117,15 +131,33 @@ export class ContentProcessor {
     }
 
     /**
-     * Roep AI aan met automatische fallback naar Groq als Gemini faalt.
-     * Probeert eerst Gemini; bij elke fout (rate limit, server error, etc.)
-     * valt het terug op Groq als die geconfigureerd is.
+     * Roep AI aan met automatische fallback-keten: Claude → Gemini → Groq.
+     *
+     * @param userPrompt — de user message (volatile, per generatie verschillend)
+     * @param systemPrompt — optionele stabiele instructies (kennisbank etc.); wordt
+     *                       gecached op Claude (~10x goedkoper bij hergebruik).
+     *                       Voor Gemini/Groq wordt het samengevoegd met userPrompt.
      */
-    private async callAI(prompt: string): Promise<string> {
-        // Stap 1: probeer Gemini als die geconfigureerd is
-        if (CONFIG.ai.apiKey) {
+    private async callAI(userPrompt: string, systemPrompt?: string): Promise<string> {
+        // Stap 1: probeer Claude als die geconfigureerd is
+        if (this.anthropic) {
             try {
-                const result = await this.model.generateContent(prompt);
+                return await this.callClaude(userPrompt, systemPrompt);
+            } catch (err) {
+                logger.warn({ err: err instanceof Error ? err.message : err }, 'Claude call mislukt — fallback naar Gemini');
+                if (!CONFIG.ai.apiKey && !CONFIG.groq.apiKey) {
+                    throw err;
+                }
+            }
+        }
+
+        // Voor Gemini/Groq: gecombineerde prompt (geen system/user split)
+        const combinedPrompt = systemPrompt ? `${systemPrompt}\n\n${userPrompt}` : userPrompt;
+
+        // Stap 2: probeer Gemini als die geconfigureerd is
+        if (this.model && CONFIG.ai.apiKey) {
+            try {
+                const result = await this.model.generateContent(combinedPrompt);
                 return result.response.text();
             } catch (err) {
                 logger.warn({ err: err instanceof Error ? err.message : err }, 'Gemini call mislukt — fallback naar Groq');
@@ -142,14 +174,14 @@ export class ContentProcessor {
 
         // Kap prompt af voor Groq's TPM limiet
         // De grootste kostenpost is de kennisbank — vervang die door een korte stijlsamenvatting
-        let groqPrompt = prompt;
+        let groqPrompt = combinedPrompt;
         const maxChars = CONFIG.groq.maxInputChars;
 
-        if (prompt.length > maxChars) {
+        if (combinedPrompt.length > maxChars) {
             // Strategie 1: vervang kennisbank door korte stijlnotitie
             const kennisbankShort = 'Schrijf in Jeroens stijl: nuchter, direct, reflectief. Begin met een herkenbare observatie. Gebruik "Nee: ..." om aannames te corrigeren. Mix korte en lange zinnen. Stel retorische vragen. Vermijd clickbait, superlatieven en grof taalgebruik.';
             // Vind kennisbank-block en vervang
-            groqPrompt = prompt.replace(
+            groqPrompt = combinedPrompt.replace(
                 /\*\*REFERENTIEMATERIAAL[\s\S]*?(?=\n\n\*\*[A-Z])/,
                 `**REFERENTIEMATERIAAL — STIJLNOTITIE:**\n${kennisbankShort}\n\n`
             );
@@ -164,7 +196,7 @@ export class ContentProcessor {
                 const middle = groqPrompt.slice(headSize, headSize + middleSize);
                 groqPrompt = `${head}${middle}\n[...]\n${tail}`;
             }
-            logger.warn({ originalLen: prompt.length, truncatedLen: groqPrompt.length }, 'Prompt ingekort voor Groq');
+            logger.warn({ originalLen: combinedPrompt.length, truncatedLen: groqPrompt.length }, 'Prompt ingekort voor Groq');
         }
 
         logger.info({ model: CONFIG.groq.model, promptLen: groqPrompt.length }, 'Groq fallback wordt aangeroepen');
@@ -195,11 +227,59 @@ export class ContentProcessor {
         return text;
     }
 
-    async generateCarousel(topic: string, options?: GenerateOptions): Promise<CarouselData> {
-        logger.info({ topic, model: CONFIG.ai.model, options }, 'Carousel genereren via preset flow');
+    /**
+     * Roep Claude (Anthropic) aan met optionele prompt caching op de system prompt.
+     *
+     * De system prompt (kennisbank + stijlregels) is statisch en wordt gecached:
+     * eerste call ~1.25x base price, volgende calls binnen 5 min ~0.1x base price.
+     * Dat scheelt grofweg een factor 10 op herhaalde generaties.
+     */
+    private async callClaude(userPrompt: string, systemPrompt?: string): Promise<string> {
+        if (!this.anthropic) throw new Error('Claude client niet geïnitialiseerd');
 
-        if (!CONFIG.ai.apiKey && !CONFIG.groq.apiKey) {
-            throw new Error('Geen API key — stel GEMINI_API_KEY of GROQ_API_KEY in via .env');
+        const systemBlocks = systemPrompt
+            ? [{ type: 'text' as const, text: systemPrompt, cache_control: { type: 'ephemeral' as const } }]
+            : undefined;
+
+        const response = await this.anthropic.messages.create({
+            model: CONFIG.anthropic.model,
+            max_tokens: CONFIG.anthropic.maxTokens,
+            ...(systemBlocks ? { system: systemBlocks } : {}),
+            messages: [{ role: 'user', content: userPrompt }],
+        });
+
+        // Log cache hit/miss voor kosten-monitoring
+        const usage = response.usage;
+        if (usage) {
+            logger.info({
+                model: CONFIG.anthropic.model,
+                inputTokens: usage.input_tokens,
+                outputTokens: usage.output_tokens,
+                cacheReadTokens: usage.cache_read_input_tokens || 0,
+                cacheWriteTokens: usage.cache_creation_input_tokens || 0,
+            }, 'Claude call voltooid');
+        }
+
+        // Extract text uit content blocks (Claude returnt array van blocks)
+        const text = response.content
+            .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+            .map(b => b.text)
+            .join('');
+
+        if (!text) {
+            throw new Error('Claude response bevatte geen tekst');
+        }
+        return text;
+    }
+
+    async generateCarousel(topic: string, options?: GenerateOptions): Promise<CarouselData> {
+        const activeModel = this.anthropic
+            ? `Claude (${CONFIG.anthropic.model})`
+            : CONFIG.ai.model;
+        logger.info({ topic, model: activeModel, options }, 'Carousel genereren via preset flow');
+
+        if (!CONFIG.anthropic.apiKey && !CONFIG.ai.apiKey && !CONFIG.groq.apiKey) {
+            throw new Error('Geen API key — stel ANTHROPIC_API_KEY, GEMINI_API_KEY of GROQ_API_KEY in via .env');
         }
 
         const kennisbank = await this.getKennisbankContent();
@@ -247,13 +327,16 @@ export class ContentProcessor {
         if (!preset) throw new Error(`Preset niet gevonden: ${selectedPresetId}`);
 
         // ── STAP 2: Vul preset velden in ──
-        const fillPrompt = buildPresetFillPrompt(topic, preset, kennisbank, options);
+        // Voor Claude: system bevat de kennisbank (gecached), user bevat topic/preset (volatile).
+        // Voor Gemini/Groq fallback wordt het automatisch samengevoegd in callAI.
+        const fillSystemPrompt = buildPresetFillSystemPrompt(kennisbank);
+        const fillUserPrompt = buildPresetFillUserPrompt(topic, preset, options);
 
         let lastError: unknown;
         for (let attempt = 1; attempt <= 2; attempt++) {
             try {
                 logger.debug({ attempt, preset: selectedPresetId }, 'Preset fill prompt naar AI gestuurd...');
-                const text = await this.callAI(fillPrompt);
+                const text = await this.callAI(fillUserPrompt, fillSystemPrompt);
                 const match = text.match(/\{[\s\S]*\}/);
                 if (!match) throw new Error('Geen JSON in AI response');
 

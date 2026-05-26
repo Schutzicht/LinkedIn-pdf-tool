@@ -27,6 +27,8 @@ function saveProject() {
     } catch (e) {
         console.warn('Kon project niet opslaan:', e);
     }
+    // Houdt cloud-versie in sync met je wijzigingen (throttled op 30 sec)
+    maybeCloudSync();
 }
 
 function getSavedProject() {
@@ -157,6 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Cloud opslag (Supabase) ────────────────────────────────────
 let currentProjectId = null;
 let currentAccessToken = null;
+
+// Throttle voor auto cloud-sync: niet vaker dan elke 30 sec
+let lastCloudSync = 0;
+const CLOUD_SYNC_MIN_INTERVAL_MS = 30000;
+
+function maybeCloudSync() {
+    // Alleen als er al een project bestaat (eerste cloud-save gebeurt direct na generate/manual)
+    if (!currentCarouselData || !currentProjectId) return;
+    const now = Date.now();
+    if (now - lastCloudSync < CLOUD_SYNC_MIN_INTERVAL_MS) return;
+    lastCloudSync = now;
+    saveToCloud(true); // silent — geen toast bij autosync
+}
 
 // ── Owner-auth (single-tenant password) ────────────────────────
 const OWNER_TOKEN_KEY = 'bv_owner_token';
@@ -361,14 +376,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     fetchRecentProjects();
 });
 
-async function saveToCloud() {
+async function saveToCloud(silent = false) {
     if (!currentCarouselData) {
-        showToast('Niets om op te slaan', 'error');
+        if (!silent) showToast('Niets om op te slaan', 'error');
         return;
     }
 
     const btn = document.getElementById('btnSaveCloud');
-    if (btn) btn.textContent = 'Opslaan...';
+    if (btn && !silent) btn.textContent = 'Opslaan...';
 
     try {
         const payload = {
@@ -414,15 +429,17 @@ async function saveToCloud() {
 
         if (result.success) {
             fetchRecentProjects(); // ververs server-lijst op de achtergrond
-            showToast('Project opgeslagen in de cloud');
+            lastCloudSync = Date.now();
+            if (!silent) showToast('Project opgeslagen in de cloud');
         } else {
             throw new Error(result.error || 'Opslaan mislukt');
         }
     } catch (e) {
         console.error('Cloud save error:', e);
+        // Errors altijd tonen — ook bij auto-sync, zodat gebruiker weet dat het niet bewaard is
         showToast('Kon niet opslaan: ' + (e.message || e), 'error');
     } finally {
-        if (btn) btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg><span class="btn-tool-label">Opslaan</span>';
+        if (btn && !silent) btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg><span class="btn-tool-label">Opslaan</span>';
     }
 }
 
@@ -664,7 +681,8 @@ async function generateCarousel() {
 
             // Start auto-save voor dit project
             startAutoSave();
-            saveProject(); // direct opslaan
+            saveProject(); // direct lokaal opslaan
+            saveToCloud(true); // en stil in de cloud — dan is je werk veilig ook als je tab dichtklapt
 
             showToast('Carousel gegenereerd!');
 
@@ -770,6 +788,7 @@ async function startManual() {
     // Start auto-save
     startAutoSave();
     saveProject();
+    saveToCloud(true); // stil in de cloud opslaan zodat het werk veilig is
 
     showToast('Handmatige modus — vul je eigen teksten in');
 
